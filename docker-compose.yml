@@ -1,0 +1,56 @@
+services:
+  my-service-production:
+    container_name: my-service-production
+    build:
+      target: production
+      context: .
+      args:
+        - PORT=${PORT:-3000}
+    ports:
+      - '${PORT:-3000}:${PORT:-3000}'
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '512m'
+        reservations:
+          cpus: '0.25'
+          memory: '256m'
+
+  my-service-dev:
+    container_name: my-service-dev
+    restart: unless-stopped
+    env_file: .env
+    build:
+      target: dev
+      context: .
+      args:
+        - PORT=${PORT:-3000}
+    ports:
+      - '${PORT:-3000}:${PORT:-3000}'
+      - '9229:9229'
+    volumes:
+      - ./src:/app/src
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '512m'
+        reservations:
+          cpus: '0.25'
+          memory: '256m'
+
+  postgres_db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_db_data:/var/lib/postgresql/data
+    ports:
+      - '${DATABASE_PORT:-5432}:5432'
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-api}
+      POSTGRES_USER: ${DATABASE_USER:-user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-secret}
+
+volumes:
+  node_modules:
+  postgres_db_data:
