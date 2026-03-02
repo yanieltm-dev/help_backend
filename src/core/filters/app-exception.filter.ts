@@ -6,12 +6,26 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { DomainError } from '@/shared/domain/errors/domain.error';
+import { mapDomainError } from './domain-error.mapper';
 
 @Catch()
-export class DatabaseExceptionFilter implements ExceptionFilter {
+export class AppExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+
+    // Check for our custom domain errors
+    if (exception instanceof DomainError) {
+      const mapping = mapDomainError(exception);
+      const status = mapping?.status ?? HttpStatus.BAD_REQUEST;
+
+      return response.status(status).json({
+        statusCode: status,
+        message: exception.message,
+        error: mapping?.error ?? 'Domain Error',
+      });
+    }
 
     // Check for PostgreSQL unique violation error code
     if (
