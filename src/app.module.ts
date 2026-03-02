@@ -6,7 +6,7 @@ import databaseConfig from './core/config/database.config';
 import { LoggerModule } from 'pino-nestjs';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { DatabaseExceptionFilter } from './core/filters/database-exception.filter';
+import { AppExceptionFilter } from './core/filters/app-exception.filter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './core/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -50,7 +50,7 @@ import { MailModule } from './shared/mail/mail.module';
     },
     {
       provide: APP_FILTER,
-      useClass: DatabaseExceptionFilter,
+      useClass: AppExceptionFilter,
     },
   ],
 })
