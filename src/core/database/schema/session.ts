@@ -4,13 +4,13 @@ import { user } from './user';
 
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
-  userId: text('userId')
+  userId: text('user_id')
     .notNull()
     .references(() => user.id),
   token: text('token').notNull(),
-  expiresAt: timestamp('expiresAt', { mode: 'date' }).notNull(),
-  ipAddress: text('ipAddress'),
-  userAgent: text('userAgent'),
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 });

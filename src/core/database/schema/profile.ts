@@ -6,9 +6,9 @@ export const profile = pgTable('profile', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: 'cascade' }),
   displayName: text('display_name'),
-  username: text('username'),
+  username: text('username').notNull().unique(),
   bio: text('bio'),
   avatarUrl: text('avatar_url'),
   coverUrl: text('cover_url'),
