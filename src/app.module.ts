@@ -4,9 +4,13 @@ import { ConfigModule } from '@nestjs/config';
 import appConfig from './core/config/app.config';
 import databaseConfig from './core/config/database.config';
 import { LoggerModule } from 'pino-nestjs';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DatabaseExceptionFilter } from './core/filters/database-exception.filter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './core/database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { MailModule } from './shared/mail/mail.module';
 
 @Module({
   imports: [
@@ -16,6 +20,7 @@ import { DatabaseModule } from './core/database/database.module';
       envFilePath: ['.env.local', '.env'],
       cache: true,
     }),
+    EventEmitterModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -35,11 +40,17 @@ import { DatabaseModule } from './core/database/database.module';
     }),
     HealthModule,
     DatabaseModule,
+    AuthModule,
+    MailModule,
   ],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: DatabaseExceptionFilter,
     },
   ],
 })
