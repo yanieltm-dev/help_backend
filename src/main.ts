@@ -79,6 +79,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'Help API Documentation',
+    jsonDocumentUrl: 'swagger/json',
   });
 
   const port = configService.getOrThrow('app.port', { infer: true });
