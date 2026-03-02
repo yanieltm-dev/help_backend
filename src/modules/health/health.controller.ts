@@ -6,7 +6,7 @@ import {
   HealthCheckResult,
   HealthCheckService,
 } from '@nestjs/terminus';
-import { Logger } from 'pino-nestjs';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 
 @Controller({
   path: 'health',
@@ -15,7 +15,8 @@ import { Logger } from 'pino-nestjs';
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private logger: Logger,
+    @InjectPinoLogger(HealthController.name)
+    private logger: PinoLogger,
     private configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -25,7 +26,7 @@ export class HealthController {
     const appName = this.configService.getOrThrow('app.name', { infer: true });
     const appPort = this.configService.getOrThrow('app.port', { infer: true });
 
-    this.logger.log(`Health check: ${appName} running on port ${appPort}`);
+    this.logger.info(`Health check: ${appName} running on port ${appPort}`);
 
     return this.health.check([
       () => ({

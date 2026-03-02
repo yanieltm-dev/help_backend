@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
+import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
 import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
@@ -21,6 +23,8 @@ import { NestEventBusAdapter } from '@/shared/infrastructure/events/nest-event-b
   controllers: [AuthController],
   providers: [
     RegisterUserUseCase,
+    VerifyEmailUseCase,
+    ResendVerificationUseCase,
     UserRegisteredListener,
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },

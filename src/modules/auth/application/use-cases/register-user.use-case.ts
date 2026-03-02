@@ -60,7 +60,8 @@ export class RegisterUserUseCase {
     // 2. Prepare Data
     const hashedPassword = await this.hasher.hash(password);
     const userId = generateUuidV7();
-    const verificationTokenVal = generateUuidV7();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await this.hasher.hash(otp);
 
     const user = User.create(userId, email, name);
     const account = Account.createCredentials(
@@ -79,22 +80,24 @@ export class RegisterUserUseCase {
     const verification = VerificationToken.create(
       generateUuidV7(),
       email,
-      verificationTokenVal,
+      hashedOtp,
       'email_verification',
+      10 * 60 * 1000, // 10 minutes
     );
 
     // 3. Execution (Atomic Transaction)
     await this.db.transaction(async (tx) => {
+      await this.verificationRepo.invalidateAllForIdentifier(
+        email,
+        'email_verification',
+      );
       await this.userRepo.save(user, tx as DrizzleDatabase);
       await this.accountRepo.save(account, tx);
       await this.profileRepo.save(profile, tx);
       await this.verificationRepo.save(verification, tx);
     });
 
-    // 4. Events
-    this.eventBus.publish(
-      new UserRegisteredDomainEvent(userId, email, verificationTokenVal),
-    );
+    this.eventBus.publish(new UserRegisteredDomainEvent(userId, email, otp));
 
     return { userId };
   }

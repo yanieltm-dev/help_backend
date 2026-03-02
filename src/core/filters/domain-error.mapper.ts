@@ -1,5 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
 import { UserAlreadyExistsError } from '@/modules/auth/domain/errors/user-already-exists.error';
+import {
+  InvalidOtpError,
+  ExpiredOtpError,
+  MaxAttemptsExceededError,
+} from '@/modules/auth/domain/errors/otp.errors';
 import { DomainError } from '@/shared/domain/errors/domain.error';
 
 export interface ErrorMapping {
@@ -15,6 +20,21 @@ const errorMap = new Map<DomainErrorConstructor, ErrorMapping>();
 errorMap.set(UserAlreadyExistsError as DomainErrorConstructor, {
   status: HttpStatus.CONFLICT,
   error: 'Conflict',
+});
+
+errorMap.set(InvalidOtpError as DomainErrorConstructor, {
+  status: HttpStatus.BAD_REQUEST,
+  error: 'Bad Request',
+});
+
+errorMap.set(ExpiredOtpError as DomainErrorConstructor, {
+  status: HttpStatus.BAD_REQUEST,
+  error: 'Bad Request',
+});
+
+errorMap.set(MaxAttemptsExceededError as DomainErrorConstructor, {
+  status: HttpStatus.BAD_REQUEST,
+  error: 'Bad Request',
 });
 
 export function mapDomainError(error: DomainError): ErrorMapping | null {

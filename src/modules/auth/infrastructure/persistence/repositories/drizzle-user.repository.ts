@@ -18,16 +18,36 @@ export class DrizzleUserRepository implements UserRepository {
       where: eq(schema.user.email, email.toLowerCase()),
     });
     if (!row) return null;
-    return User.create(row.id, row.email, row.name);
+    return User.create(
+      row.id,
+      row.email,
+      row.name,
+      row.emailVerified,
+      row.status,
+      row.createdAt,
+    );
   }
 
   async save(user: User, tx?: DrizzleDatabase): Promise<void> {
     const db = tx || this.db;
-    await db.insert(schema.user).values({
-      id: user.id,
-      email: user.email.value,
-      name: user.name,
-      createdAt: user.createdAt,
-    });
+    await db
+      .insert(schema.user)
+      .values({
+        id: user.id,
+        email: user.email.value,
+        name: user.name,
+        emailVerified: user.emailVerified,
+        status: user.status,
+        createdAt: user.createdAt,
+      })
+      .onConflictDoUpdate({
+        target: schema.user.id,
+        set: {
+          email: user.email.value,
+          name: user.name,
+          emailVerified: user.emailVerified,
+          status: user.status,
+        },
+      });
   }
 }

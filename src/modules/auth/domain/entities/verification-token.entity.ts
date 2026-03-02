@@ -5,6 +5,7 @@ export class VerificationToken {
     public readonly token: string,
     public readonly type: 'email_verification' | 'password_reset',
     public readonly expiresAt: Date,
+    public readonly attempts: number = 0,
     public readonly createdAt: Date = new Date(),
   ) {}
 
@@ -14,6 +15,7 @@ export class VerificationToken {
     token: string,
     type: 'email_verification' | 'password_reset',
     expiresInMs: number = 24 * 60 * 60 * 1000,
+    attempts: number = 0,
   ): VerificationToken {
     return new VerificationToken(
       id,
@@ -21,10 +23,39 @@ export class VerificationToken {
       token,
       type,
       new Date(Date.now() + expiresInMs),
+      attempts,
     );
   }
 
   isExpired(): boolean {
     return new Date() > this.expiresAt;
+  }
+
+  incrementAttempts(): VerificationToken {
+    return new VerificationToken(
+      this.id,
+      this.identifier,
+      this.token,
+      this.type,
+      this.expiresAt,
+      this.attempts + 1,
+      this.createdAt,
+    );
+  }
+
+  withFixedExpiration(expiresAt: Date, createdAt: Date): VerificationToken {
+    return new VerificationToken(
+      this.id,
+      this.identifier,
+      this.token,
+      this.type,
+      expiresAt,
+      this.attempts,
+      createdAt,
+    );
+  }
+
+  hasExceededMaxAttempts(maxAttempts: number): boolean {
+    return this.attempts >= maxAttempts;
   }
 }
