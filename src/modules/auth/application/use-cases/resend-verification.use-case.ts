@@ -10,6 +10,8 @@ import type { VerificationRepository } from '../../domain/ports/verification.rep
 import type { PasswordHasher } from '../../domain/ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
+import { Otp } from '../../domain/value-objects/otp.vo';
 import { generateUuidV7 } from '@/shared/utils/uuid';
 import { BadRequestException } from '@nestjs/common';
 
@@ -47,7 +49,7 @@ export class ResendVerificationUseCase {
       'email_verification',
     );
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Otp.generate().value;
     const hashedOtp = await this.hasher.hash(otp);
 
     const verification = VerificationToken.create(
@@ -59,5 +61,6 @@ export class ResendVerificationUseCase {
     );
 
     await this.verificationRepo.save(verification);
+    this.eventBus.publish(new VerificationResendedDomainEvent(email, otp));
   }
 }

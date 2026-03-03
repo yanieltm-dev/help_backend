@@ -19,6 +19,7 @@ import { Account } from '../../domain/entities/account.entity';
 import { Profile } from '../../domain/entities/profile.entity';
 import { VerificationToken } from '../../domain/entities/verification-token.entity';
 import { Password } from '../../domain/value-objects/password.vo';
+import { Otp } from '../../domain/value-objects/otp.vo';
 import { generateUuidV7 } from '@/shared/utils/uuid';
 import { DATABASE_CONNECTION } from '@/core/database/database.module';
 import type { DrizzleDatabase } from '@/core/database/connection';
@@ -60,7 +61,7 @@ export class RegisterUserUseCase {
     // 2. Prepare Data
     const hashedPassword = await this.hasher.hash(password);
     const userId = generateUuidV7();
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Otp.generate().value;
     const hashedOtp = await this.hasher.hash(otp);
 
     const user = User.create(userId, email, name);

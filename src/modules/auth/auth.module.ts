@@ -5,6 +5,7 @@ import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-cas
 import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
+import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
 import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
 import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
 import { DrizzleProfileRepository } from './infrastructure/persistence/repositories/drizzle-profile.repository';
@@ -49,6 +50,7 @@ import { AllConfigType } from '@/core/config/config.type';
     ResendVerificationUseCase,
     LoginUseCase,
     UserRegisteredListener,
+    VerificationResendedListener,
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: PROFILE_REPOSITORY, useClass: DrizzleProfileRepository },
