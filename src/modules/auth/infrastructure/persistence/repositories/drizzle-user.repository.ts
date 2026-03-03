@@ -13,6 +13,21 @@ export class DrizzleUserRepository implements UserRepository {
     private readonly db: DrizzleDatabase,
   ) {}
 
+  async findById(id: string): Promise<User | null> {
+    const row = await this.db.query.user.findFirst({
+      where: eq(schema.user.id, id),
+    });
+    if (!row) return null;
+    return User.create(
+      row.id,
+      row.email,
+      row.name,
+      row.emailVerified,
+      row.status,
+      row.createdAt,
+    );
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.db.query.user.findFirst({
       where: eq(schema.user.email, email.toLowerCase()),
@@ -26,6 +41,14 @@ export class DrizzleUserRepository implements UserRepository {
       row.status,
       row.createdAt,
     );
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    const profileRow = await this.db.query.profile.findFirst({
+      where: eq(schema.profile.username, username.toLowerCase()),
+    });
+    if (!profileRow) return null;
+    return this.findById(profileRow.userId);
   }
 
   async save(user: User, tx?: DrizzleDatabase): Promise<void> {

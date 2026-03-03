@@ -5,6 +5,9 @@ import {
   ExpiredOtpError,
   MaxAttemptsExceededError,
 } from '@/modules/auth/domain/errors/otp.errors';
+import { AccountLockedError } from '@/modules/auth/domain/errors/account-locked.error';
+import { AccountNotVerifiedError } from '@/modules/auth/domain/errors/account-not-verified.error';
+import { InvalidCredentialsError } from '@/modules/auth/domain/errors/invalid-credentials.error';
 import { DomainError } from '@/shared/domain/errors/domain.error';
 
 export interface ErrorMapping {
@@ -35,6 +38,21 @@ errorMap.set(ExpiredOtpError as DomainErrorConstructor, {
 errorMap.set(MaxAttemptsExceededError as DomainErrorConstructor, {
   status: HttpStatus.BAD_REQUEST,
   error: 'Bad Request',
+});
+
+errorMap.set(AccountLockedError as DomainErrorConstructor, {
+  status: HttpStatus.FORBIDDEN,
+  error: 'Forbidden',
+});
+
+errorMap.set(AccountNotVerifiedError as DomainErrorConstructor, {
+  status: HttpStatus.FORBIDDEN,
+  error: 'Forbidden',
+});
+
+errorMap.set(InvalidCredentialsError as DomainErrorConstructor, {
+  status: HttpStatus.UNAUTHORIZED,
+  error: 'Unauthorized',
 });
 
 export function mapDomainError(error: DomainError): ErrorMapping | null {

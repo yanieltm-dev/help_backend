@@ -11,11 +11,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './core/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './shared/mail/mail.module';
+import authConfig from './core/config/auth.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, authConfig],
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
       cache: true,

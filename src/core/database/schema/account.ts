@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { user } from './user';
 
@@ -20,6 +20,8 @@ export const account = pgTable('account', {
   }),
   scope: text('scope'),
   password: text('password'),
+  failedLoginAttempts: integer('failed_login_attempts').default(0).notNull(),
+  lockedUntil: timestamp('locked_until', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 });
