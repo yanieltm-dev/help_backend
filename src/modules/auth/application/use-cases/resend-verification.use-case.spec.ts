@@ -1,16 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ResendVerificationUseCase } from './resend-verification.use-case';
-import {
-  USER_REPOSITORY,
-  VERIFICATION_REPOSITORY,
-  PASSWORD_HASHER,
-  EVENT_BUS,
-} from '../../auth.tokens';
+
 import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
-import { BadRequestException } from '@nestjs/common';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../../domain/ports/password-hasher.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { User } from '../../domain/entities/user.entity';
 
@@ -24,8 +19,9 @@ describe('ResendVerificationUseCase', () => {
   let verificationRepo: jest.Mocked<VerificationRepository>;
   let hasher: jest.Mocked<PasswordHasher>;
   let eventBus: jest.Mocked<IEventBus>;
+  let idGenerator: { generate: jest.Mock };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     userRepo = {
       findByEmail: jest.fn(),
     } as unknown as jest.Mocked<UserRepository>;
@@ -39,18 +35,18 @@ describe('ResendVerificationUseCase', () => {
     eventBus = {
       publish: jest.fn(),
     } as unknown as jest.Mocked<IEventBus>;
+    idGenerator = {
+      generate: jest.fn().mockReturnValue('mocked-uuid'),
+    };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ResendVerificationUseCase,
-        { provide: USER_REPOSITORY, useValue: userRepo },
-        { provide: VERIFICATION_REPOSITORY, useValue: verificationRepo },
-        { provide: PASSWORD_HASHER, useValue: hasher },
-        { provide: EVENT_BUS, useValue: eventBus },
-      ],
-    }).compile();
-
-    useCase = module.get<ResendVerificationUseCase>(ResendVerificationUseCase);
+    useCase = new ResendVerificationUseCase(
+      userRepo,
+      verificationRepo,
+      hasher,
+      eventBus,
+      idGenerator,
+      { otpExpiresInMs: 3600000 },
+    );
   });
 
   it('should publish VerificationResendedDomainEvent when successful', async () => {
@@ -83,7 +79,7 @@ describe('ResendVerificationUseCase', () => {
 
     await expect(
       useCase.execute({ email: 'unknown@example.com' }),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toThrow(UserNotFoundError);
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(eventBus.publish).not.toHaveBeenCalled();
   });
@@ -94,7 +90,7 @@ describe('ResendVerificationUseCase', () => {
     userRepo.findByEmail.mockResolvedValue(user);
 
     await expect(useCase.execute({ email: emailStr })).rejects.toThrow(
-      BadRequestException,
+      EmailAlreadyVerifiedError,
     );
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(eventBus.publish).not.toHaveBeenCalled();

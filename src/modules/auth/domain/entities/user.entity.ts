@@ -1,12 +1,20 @@
 import { Email } from '../value-objects/email.vo';
 
+export const UserStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending_verification',
+} as const;
+
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
+
 export class User {
   constructor(
     public readonly id: string,
     public readonly email: Email,
     public readonly name: string,
     public readonly emailVerified: boolean = false,
-    public readonly status: string = 'pending_verification',
+    public readonly status: UserStatus = UserStatus.PENDING,
     public readonly createdAt: Date = new Date(),
   ) {}
 
@@ -15,7 +23,7 @@ export class User {
     email: string,
     name: string,
     emailVerified: boolean = false,
-    status: string = 'pending_verification',
+    status: UserStatus = UserStatus.PENDING,
     createdAt: Date = new Date(),
   ): User {
     return new User(
@@ -34,7 +42,7 @@ export class User {
       this.email.value,
       this.name,
       true,
-      'active',
+      UserStatus.ACTIVE,
       this.createdAt,
     );
   }

@@ -1,12 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-  USER_REPOSITORY,
-  VERIFICATION_REPOSITORY,
-  PASSWORD_HASHER,
-} from '../../auth.tokens';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../../domain/ports/password-hasher.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import {
   InvalidOtpError,
   ExpiredOtpError,
@@ -18,15 +13,14 @@ export interface VerifyEmailCommand {
   code: string;
 }
 
-@Injectable()
 export class VerifyEmailUseCase {
   private readonly MAX_ATTEMPTS = 5;
 
   constructor(
-    @Inject(USER_REPOSITORY) private readonly userRepo: UserRepository,
-    @Inject(VERIFICATION_REPOSITORY)
+    private readonly userRepo: UserRepository,
     private readonly verificationRepo: VerificationRepository,
-    @Inject(PASSWORD_HASHER) private readonly hasher: PasswordHasher,
+    private readonly hasher: PasswordHasher,
+    private readonly uow: IUnitOfWork,
   ) {}
 
   async execute(command: VerifyEmailCommand): Promise<void> {
@@ -63,7 +57,10 @@ export class VerifyEmailUseCase {
     }
 
     const verifiedUser = user.verifyEmail();
-    await this.userRepo.save(verifiedUser);
-    await this.verificationRepo.delete(verification.id);
+
+    await this.uow.run(async (tx) => {
+      await this.userRepo.save(verifiedUser, tx);
+      await this.verificationRepo.delete(verification.id);
+    });
   }
 }

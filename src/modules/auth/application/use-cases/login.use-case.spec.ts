@@ -1,21 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { LoginUseCase } from './login.use-case';
-import {
-  USER_REPOSITORY,
-  ACCOUNT_REPOSITORY,
-  PROFILE_REPOSITORY,
-  PASSWORD_HASHER,
-  AUTHENTICATOR,
-  SESSION_REPOSITORY,
-} from '../../auth.tokens';
+
 import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
 import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
 import { User } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { PasswordHasher } from '../../domain/ports/password-hasher.port';
-import type { Authenticator } from '../../domain/ports/authenticator.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
+import type { Authenticator } from '../ports/authenticator.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import { Account } from '../../domain/entities/account.entity';
 import { Password } from '../../domain/value-objects/password.vo';
@@ -32,8 +24,9 @@ describe('LoginUseCase', () => {
   let hasher: jest.Mocked<PasswordHasher>;
   let authenticator: jest.Mocked<Authenticator>;
   let sessionRepo: jest.Mocked<SessionRepository>;
+  let idGenerator: { generate: jest.Mock };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     userRepo = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
@@ -61,20 +54,24 @@ describe('LoginUseCase', () => {
       findByToken: jest.fn(),
       deleteByToken: jest.fn(),
     } as unknown as jest.Mocked<SessionRepository>;
+    idGenerator = {
+      generate: jest.fn().mockReturnValue('mocked-uuid'),
+    };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        LoginUseCase,
-        { provide: USER_REPOSITORY, useValue: userRepo },
-        { provide: ACCOUNT_REPOSITORY, useValue: accountRepo },
-        { provide: PROFILE_REPOSITORY, useValue: profileRepo },
-        { provide: PASSWORD_HASHER, useValue: hasher },
-        { provide: AUTHENTICATOR, useValue: authenticator },
-        { provide: SESSION_REPOSITORY, useValue: sessionRepo },
-      ],
-    }).compile();
-
-    useCase = module.get<LoginUseCase>(LoginUseCase);
+    useCase = new LoginUseCase(
+      userRepo,
+      accountRepo,
+      profileRepo,
+      hasher,
+      authenticator,
+      sessionRepo,
+      idGenerator,
+      {
+        maxFailedAttempts: 5,
+        lockoutDurationMs: 900000,
+        sessionExpiresInMs: 3600000,
+      },
+    );
   });
 
   it('should return tokens and expiration date on successful login', async () => {

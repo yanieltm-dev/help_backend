@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
-import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
-import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
-import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
-import { LoginUseCase } from './application/use-cases/login.use-case';
+import { authUseCaseProviders } from './auth-use-cases.providers';
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
 import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
@@ -28,6 +25,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-error-registration';
+import { UNIT_OF_WORK, ID_GENERATOR } from '@/shared/shared.tokens';
+import { DrizzleUnitOfWork } from '@/shared/infrastructure/persistence/drizzle-unit-of-work.adapter';
+import { UuidV7Generator } from '@/shared/infrastructure/services/uuid-v7-generator.adapter';
 
 @Module({
   imports: [
@@ -46,10 +46,7 @@ import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-erro
   ],
   controllers: [AuthController],
   providers: [
-    RegisterUserUseCase,
-    VerifyEmailUseCase,
-    ResendVerificationUseCase,
-    LoginUseCase,
+    ...authUseCaseProviders,
     UserRegisteredListener,
     VerificationResendedListener,
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
@@ -63,6 +60,8 @@ import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-erro
     { provide: AUTHENTICATOR, useClass: JwtAuthenticator },
     { provide: SESSION_REPOSITORY, useClass: DrizzleSessionRepository },
     { provide: EVENT_BUS, useClass: NestEventBusAdapter },
+    { provide: UNIT_OF_WORK, useClass: DrizzleUnitOfWork },
+    { provide: ID_GENERATOR, useClass: UuidV7Generator },
   ],
 })
 export class AuthModule {

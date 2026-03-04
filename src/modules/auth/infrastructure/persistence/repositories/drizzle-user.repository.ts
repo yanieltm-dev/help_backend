@@ -4,7 +4,7 @@ import * as schema from '@/core/database/schema';
 import { eq } from 'drizzle-orm';
 import type { DrizzleDatabase } from '@/core/database/connection';
 import { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
-import { User } from '@/modules/auth/domain/entities/user.entity';
+import { User, UserStatus } from '@/modules/auth/domain/entities/user.entity';
 
 @Injectable()
 export class DrizzleUserRepository implements UserRepository {
@@ -23,7 +23,7 @@ export class DrizzleUserRepository implements UserRepository {
       row.email,
       row.name,
       row.emailVerified,
-      row.status,
+      row.status as UserStatus,
       row.createdAt,
     );
   }
@@ -38,17 +38,9 @@ export class DrizzleUserRepository implements UserRepository {
       row.email,
       row.name,
       row.emailVerified,
-      row.status,
+      row.status as UserStatus,
       row.createdAt,
     );
-  }
-
-  async findByUsername(username: string): Promise<User | null> {
-    const profileRow = await this.db.query.profile.findFirst({
-      where: eq(schema.profile.username, username.toLowerCase()),
-    });
-    if (!profileRow) return null;
-    return this.findById(profileRow.userId);
   }
 
   async save(user: User, tx?: DrizzleDatabase): Promise<void> {

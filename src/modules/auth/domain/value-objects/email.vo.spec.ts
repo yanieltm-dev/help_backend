@@ -7,9 +7,8 @@ describe('Email Value Object', () => {
     expect(email.value).toBe(emailStr);
   });
 
-  it('should normalize email to lowercase and trim it', () => {
-    const emailStr = '  TEST@Example.Com  ';
-    const email = Email.create(emailStr);
+  it('should normalize email to lowercase', () => {
+    const email = Email.create('TEST@EXAMPLE.COM ');
     expect(email.value).toBe('test@example.com');
   });
 
@@ -17,5 +16,9 @@ describe('Email Value Object', () => {
     expect(() => Email.create('invalid-email')).toThrow('Invalid email format');
     expect(() => Email.create('test@')).toThrow('Invalid email format');
     expect(() => Email.create('@example.com')).toThrow('Invalid email format');
+  });
+
+  it('should throw error for empty email', () => {
+    expect(() => Email.create('')).toThrow('Invalid email format');
   });
 });

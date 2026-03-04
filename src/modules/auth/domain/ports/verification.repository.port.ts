@@ -1,7 +1,7 @@
 import { VerificationToken } from '../entities/verification-token.entity';
 
 export interface VerificationRepository {
-  save(token: VerificationToken, tx?: any): Promise<void>;
+  save(token: VerificationToken, tx?: unknown): Promise<void>;
 
   findByIdentifierAndType(
     identifier: string,

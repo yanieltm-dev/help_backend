@@ -1,28 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
-import {
-  USER_REPOSITORY,
-  ACCOUNT_REPOSITORY,
-  PROFILE_REPOSITORY,
-  VERIFICATION_REPOSITORY,
-  PASSWORD_HASHER,
-  EVENT_BUS,
-} from '../../auth.tokens';
+export type RegisterUserUseCaseConfig = {
+  otpExpiresInMs: number;
+};
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../../domain/ports/password-hasher.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
+import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { User } from '../../domain/entities/user.entity';
 import { Account } from '../../domain/entities/account.entity';
 import { Profile } from '../../domain/entities/profile.entity';
 import { VerificationToken } from '../../domain/entities/verification-token.entity';
 import { Password } from '../../domain/value-objects/password.vo';
 import { Otp } from '../../domain/value-objects/otp.vo';
-import { generateUuidV7 } from '@/shared/utils/uuid';
-import { DATABASE_CONNECTION } from '@/core/database/database.module';
-import type { DrizzleDatabase } from '@/core/database/connection';
+import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
 import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
 
 export interface RegisterUserCommand {
@@ -33,66 +26,64 @@ export interface RegisterUserCommand {
   birthDate: string;
 }
 
-@Injectable()
 export class RegisterUserUseCase {
   constructor(
-    @Inject(USER_REPOSITORY) private readonly userRepo: UserRepository,
-    @Inject(ACCOUNT_REPOSITORY)
+    private readonly userRepo: UserRepository,
     private readonly accountRepo: AccountRepository,
-    @Inject(PROFILE_REPOSITORY)
     private readonly profileRepo: ProfileRepository,
-    @Inject(VERIFICATION_REPOSITORY)
     private readonly verificationRepo: VerificationRepository,
-    @Inject(PASSWORD_HASHER) private readonly hasher: PasswordHasher,
-    @Inject(DATABASE_CONNECTION) private readonly db: DrizzleDatabase,
-    @Inject(EVENT_BUS) private readonly eventBus: IEventBus,
+    private readonly hasher: PasswordHasher,
+    private readonly uow: IUnitOfWork,
+    private readonly idGenerator: IIdGenerator,
+    private readonly eventBus: IEventBus,
+    private readonly config: RegisterUserUseCaseConfig,
   ) {}
 
   async execute(command: RegisterUserCommand) {
     const { email, username, password, name, birthDate } = command;
 
-    // 1. Business Validation
+    // Business Validation
     const existingUser = await this.userRepo.findByEmail(email);
     if (existingUser) throw new UserAlreadyExistsError('email');
 
     const existingProfile = await this.profileRepo.findByUsername(username);
     if (existingProfile) throw new UserAlreadyExistsError('username');
 
-    // 2. Prepare Data
+    // Prepare Data
     const hashedPassword = await this.hasher.hash(password);
-    const userId = generateUuidV7();
+    const userId = this.idGenerator.generate();
     const otp = Otp.generate().value;
     const hashedOtp = await this.hasher.hash(otp);
 
     const user = User.create(userId, email, name);
     const account = Account.createCredentials(
-      generateUuidV7(),
+      this.idGenerator.generate(),
       userId,
       email,
       Password.createFromHash(hashedPassword),
     );
     const profile = Profile.create(
-      generateUuidV7(),
+      this.idGenerator.generate(),
       userId,
       username,
       name,
       new Date(birthDate),
     );
     const verification = VerificationToken.create(
-      generateUuidV7(),
+      this.idGenerator.generate(),
       email,
       hashedOtp,
       'email_verification',
-      10 * 60 * 1000, // 10 minutes
+      this.config.otpExpiresInMs,
     );
 
-    // 3. Execution (Atomic Transaction)
-    await this.db.transaction(async (tx) => {
+    // Execution (Atomic Transaction)
+    await this.uow.run(async (tx) => {
       await this.verificationRepo.invalidateAllForIdentifier(
         email,
         'email_verification',
       );
-      await this.userRepo.save(user, tx as DrizzleDatabase);
+      await this.userRepo.save(user, tx);
       await this.accountRepo.save(account, tx);
       await this.profileRepo.save(profile, tx);
       await this.verificationRepo.save(verification, tx);

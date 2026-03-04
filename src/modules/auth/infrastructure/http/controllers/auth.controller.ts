@@ -9,6 +9,8 @@ import {
   Version,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { AllConfigType } from '@/core/config/config.type';
 import { RegisterUserUseCase } from '../../../application/use-cases/register-user.use-case';
 import { VerifyEmailUseCase } from '../../../application/use-cases/verify-email.use-case';
 import { ResendVerificationUseCase } from '../../../application/use-cases/resend-verification.use-case';
@@ -28,6 +30,7 @@ export class AuthController {
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
     private readonly loginUseCase: LoginUseCase,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
   @Post('register')
@@ -105,7 +108,9 @@ export class AuthController {
       httpOnly: true,
       secure: true, // Should be true in production, assuming HTTPS
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (should match session duration)
+      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
+        infer: true,
+      }),
     });
 
     return {
