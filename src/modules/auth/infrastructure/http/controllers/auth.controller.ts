@@ -15,12 +15,29 @@ import { RegisterUserUseCase } from '../../../application/use-cases/register-use
 import { VerifyEmailUseCase } from '../../../application/use-cases/verify-email.use-case';
 import { ResendVerificationUseCase } from '../../../application/use-cases/resend-verification.use-case';
 import { LoginUseCase } from '../../../application/use-cases/login.use-case';
+import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-session.use-case';
+import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
+import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
 import { LoginDto } from '../dto/login.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterResponseDto } from '../responses/register.response';
 import { LoginResponseDto } from '../responses/login.response';
+
+function getCookie(req: Request, name: string): string | undefined {
+  const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })
+    .cookies;
+  if (!cookiesUnknown || typeof cookiesUnknown !== 'object') return undefined;
+  const value = (cookiesUnknown as Record<string, unknown>)[name];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getUserAgent(req: Request): string | undefined {
+  const header = req.headers['user-agent'];
+  if (typeof header === 'string') return header;
+  return undefined;
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -30,6 +47,8 @@ export class AuthController {
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
     private readonly loginUseCase: LoginUseCase,
+    private readonly refreshSessionUseCase: RefreshSessionUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -101,7 +120,7 @@ export class AuthController {
       await this.loginUseCase.execute({
         ...dto,
         ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
+        userAgent: getUserAgent(req),
       });
 
     res.cookie('refresh_token', refreshToken, {
@@ -117,5 +136,70 @@ export class AuthController {
       accessToken,
       accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
     };
+  }
+
+  @Post('refresh')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, type: LoginResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginResponseDto> {
+    const refreshToken = getCookie(req, 'refresh_token');
+
+    if (!refreshToken) {
+      throw new InvalidRefreshTokenError();
+    }
+
+    const {
+      accessToken,
+      accessTokenExpiresAt,
+      refreshToken: newRefreshToken,
+    } = await this.refreshSessionUseCase.execute({
+      refreshToken,
+      ipAddress: req.ip,
+      userAgent: getUserAgent(req),
+    });
+
+    res.cookie('refresh_token', newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
+        infer: true,
+      }),
+    });
+
+    return {
+      accessToken,
+      accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
+    };
+  }
+
+  @Post('logout')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Logout user and revoke refresh token' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const refreshToken = getCookie(req, 'refresh_token');
+
+    await this.logoutUseCase.execute({
+      refreshToken: refreshToken ?? '',
+    });
+
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+
+    return { message: 'Logged out' };
   }
 }

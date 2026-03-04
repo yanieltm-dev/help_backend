@@ -43,4 +43,13 @@ export class JwtAuthenticator implements Authenticator {
   async verifyToken(token: string): Promise<{ sub: string; email: string }> {
     return this.jwtService.verifyAsync(token);
   }
+
+  async verifyRefreshToken(
+    token: string,
+  ): Promise<{ sub: string; email: string }> {
+    const secret = this.configService.getOrThrow('auth.refreshSecret', {
+      infer: true,
+    });
+    return this.jwtService.verifyAsync(token, { secret });
+  }
 }

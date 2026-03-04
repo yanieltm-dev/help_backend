@@ -13,6 +13,8 @@ import { RegisterUserUseCase } from './application/use-cases/register-user.use-c
 import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
 import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
+import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
+import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import {
@@ -163,6 +165,29 @@ export const authUseCaseProviders: Provider[] = [
           ),
         },
       );
+    },
+  },
+  {
+    provide: RefreshSessionUseCase,
+    inject: [SESSION_REPOSITORY, USER_REPOSITORY, AUTHENTICATOR, ConfigService],
+    useFactory: (
+      sessionRepo: SessionRepository,
+      userRepo: UserRepository,
+      authenticator: Authenticator,
+      configService: ConfigService<AllConfigType>,
+    ) =>
+      new RefreshSessionUseCase(sessionRepo, userRepo, authenticator, {
+        sessionExpiresInMs: configService.getOrThrow(
+          'auth.sessionExpiresInMs',
+          { infer: true },
+        ),
+      }),
+  },
+  {
+    provide: LogoutUseCase,
+    inject: [SESSION_REPOSITORY],
+    useFactory: (sessionRepo: SessionRepository) => {
+      return new LogoutUseCase(sessionRepo);
     },
   },
 ];
