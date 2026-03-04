@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   Authenticator,
   AuthTokens,
-} from '../../domain/ports/authenticator.port';
+} from '../../application/ports/authenticator.port';
 import { AllConfigType } from '@/core/config/config.type';
 
 @Injectable()
