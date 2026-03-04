@@ -11,6 +11,13 @@ import request from 'supertest';
 import { AppModule } from '@/app.module';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { App } from 'supertest/types';
+
+interface ApiResponse {
+  message: string;
+  userId?: string;
+  errors?: Record<string, string[]>;
+}
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -88,18 +95,19 @@ describe('AuthController (e2e)', () => {
 
   describe('/api/v1/auth/register (POST)', () => {
     it('Scenario 1: Successful registration', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send(validUser)
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('message', 'Verification email sent');
-          expect(res.body).toHaveProperty('userId');
+          const body = res.body as ApiResponse;
+          expect(body).toHaveProperty('message', 'Verification email sent');
+          expect(body).toHaveProperty('userId');
         });
     });
 
     it('Scenario 2: Email already registered', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send({
           ...validUser,
@@ -107,12 +115,14 @@ describe('AuthController (e2e)', () => {
         })
         .expect(409)
         .expect((res) => {
-          expect(res.body.message).toBe('Email already registered');
+          expect((res.body as ApiResponse).message).toBe(
+            'Email already registered',
+          );
         });
     });
 
     it('Scenario 3: Username already registered', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send({
           ...validUser,
@@ -120,7 +130,9 @@ describe('AuthController (e2e)', () => {
         })
         .expect(409)
         .expect((res) => {
-          expect(res.body.message).toBe('Username is not available');
+          expect((res.body as ApiResponse).message).toBe(
+            'Username is not available',
+          );
         });
     });
 
@@ -132,20 +144,21 @@ describe('AuthController (e2e)', () => {
         birthDate: new Date().toISOString().split('T')[0], // Born today
       };
 
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send(youngUser)
         .expect(422)
         .expect((res) => {
-          expect(res.body.message).toBe('Validation failed');
-          expect(res.body.errors.birthDate).toContain(
+          const body = res.body as ApiResponse;
+          expect(body.message).toBe('Validation failed');
+          expect(body.errors?.birthDate).toContain(
             'You must be at least 13 years old to register',
           );
         });
     });
 
     it('Scenario 5: Invalid data (invalid email)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send({
           ...validUser,
@@ -153,13 +166,14 @@ describe('AuthController (e2e)', () => {
         })
         .expect(422)
         .expect((res) => {
-          expect(res.body.message).toBe('Validation failed');
-          expect(res.body.errors).toHaveProperty('email');
+          const body = res.body as ApiResponse;
+          expect(body.message).toBe('Validation failed');
+          expect(body.errors).toHaveProperty('email');
         });
     });
 
     it('Scenario 5: Invalid data (weak password)', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send({
           ...validUser,
@@ -167,8 +181,9 @@ describe('AuthController (e2e)', () => {
         })
         .expect(422)
         .expect((res) => {
-          expect(res.body.message).toBe('Validation failed');
-          expect(res.body.errors).toHaveProperty('password');
+          const body = res.body as ApiResponse;
+          expect(body.message).toBe('Validation failed');
+          expect(body.errors).toHaveProperty('password');
         });
     });
   });

@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '@/app.module';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { App } from 'supertest/types';
 
 describe('HealthController (e2e)', () => {
   let app: INestApplication;
@@ -33,7 +34,7 @@ describe('HealthController (e2e)', () => {
   });
 
   it('/api/v1/health (GET)', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as App)
       .get('/api/v1/health')
       .expect(200)
       .expect((res) => {

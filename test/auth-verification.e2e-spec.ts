@@ -8,6 +8,11 @@ import request from 'supertest';
 import { AppModule } from '@/app.module';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { App } from 'supertest/types';
+
+interface ApiResponse {
+  message: string;
+}
 
 describe('Auth Verification (e2e)', () => {
   let app: INestApplication;
@@ -54,29 +59,35 @@ describe('Auth Verification (e2e)', () => {
 
   it('Verification Flow: Register -> Fail Verification -> Resend -> Succeed', async () => {
     // 1. Register
-    const regRes = await request(app.getHttpServer())
+    const regRes = await request(app.getHttpServer() as App)
       .post('/api/v1/auth/register')
       .send(validUser)
       .expect(201);
 
-    expect(regRes.body.message).toBe('Verification email sent');
+    expect((regRes.body as ApiResponse).message).toBe(
+      'Verification email sent',
+    );
 
     // 2. Fail with wrong code
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .post('/api/v1/auth/verify-email')
       .send({ email: validUser.email, code: '000000' })
       .expect(400)
       .expect((res) => {
-        expect(res.body.message).toBe('Invalid verification code');
+        expect((res.body as ApiResponse).message).toBe(
+          'Invalid verification code',
+        );
       });
 
     // 3. Resend
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as App)
       .post('/api/v1/auth/resend-verification')
       .send({ email: validUser.email })
       .expect(200)
       .expect((res) => {
-        expect(res.body.message).toBe('Verification email resent');
+        expect((res.body as ApiResponse).message).toBe(
+          'Verification email resent',
+        );
       });
 
     // Note: To test success, we'd need to mock the OTP generation or intercept the event.
