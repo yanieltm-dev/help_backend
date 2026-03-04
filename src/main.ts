@@ -12,6 +12,7 @@ import { AllConfigType } from './core/config/config.type';
 import { Logger } from 'pino-nestjs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -26,6 +27,11 @@ async function bootstrap() {
   );
 
   app.use(helmet());
+  app.use(
+    cookieParser(
+      configService.getOrThrow('auth.cookieSecret', { infer: true }),
+    ),
+  );
 
   app.enableVersioning({
     type: VersioningType.URI,

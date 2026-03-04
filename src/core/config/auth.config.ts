@@ -7,6 +7,11 @@ export type AuthConfig = {
   jwtExpiresIn: string;
   refreshSecret: string;
   refreshExpiresIn: string;
+  cookieSecret: string;
+  maxFailedAttempts: number;
+  lockoutDurationMs: number;
+  otpExpiresInMs: number;
+  sessionExpiresInMs: number;
 };
 
 class EnvironmentVariables {
@@ -20,11 +25,27 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  AUTH_REFRESH_SECRET: string;
+  AUTH_REFRESH_EXPIRES_IN: string;
 
   @IsString()
   @IsOptional()
-  AUTH_REFRESH_EXPIRES_IN: string;
+  AUTH_COOKIE_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_MAX_FAILED_ATTEMPTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_LOCKOUT_DURATION_MS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_OTP_EXPIRES_IN_MS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_SESSION_EXPIRES_IN_MS?: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -35,5 +56,22 @@ export default registerAs<AuthConfig>('auth', () => {
     jwtExpiresIn: process.env.AUTH_JWT_EXPIRES_IN || '15m',
     refreshSecret: process.env.AUTH_REFRESH_SECRET || 'refresh-secret',
     refreshExpiresIn: process.env.AUTH_REFRESH_EXPIRES_IN || '7d',
+    maxFailedAttempts: parseInt(
+      process.env.AUTH_MAX_FAILED_ATTEMPTS || '5',
+      10,
+    ),
+    lockoutDurationMs: parseInt(
+      process.env.AUTH_LOCKOUT_DURATION_MS || '900000',
+      10,
+    ),
+    otpExpiresInMs: parseInt(
+      process.env.AUTH_OTP_EXPIRES_IN_MS || '600000',
+      10,
+    ),
+    sessionExpiresInMs: parseInt(
+      process.env.AUTH_SESSION_EXPIRES_IN_MS || '604800000',
+      10,
+    ),
+    cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
   };
 });
