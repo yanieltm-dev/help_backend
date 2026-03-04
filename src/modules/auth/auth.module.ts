@@ -27,6 +27,7 @@ import { NestEventBusAdapter } from '@/shared/infrastructure/events/nest-event-b
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-error-registration';
 
 @Module({
   imports: [
@@ -64,4 +65,8 @@ import { AllConfigType } from '@/core/config/config.type';
     { provide: EVENT_BUS, useClass: NestEventBusAdapter },
   ],
 })
-export class AuthModule {}
+export class AuthModule {
+  constructor() {
+    registerAuthDomainErrors();
+  }
+}
