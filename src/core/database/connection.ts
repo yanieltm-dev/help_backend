@@ -4,12 +4,16 @@ import * as schema from './schema';
 
 export type DrizzleDatabase = NodePgDatabase<typeof schema>;
 
+export function createDrizzleDatabaseFromPool(pool: Pool): DrizzleDatabase {
+  return drizzle(pool, { schema });
+}
+
 export function createDrizzleDatabase(databaseUrl: string): {
   db: DrizzleDatabase;
   pool: Pool;
 } {
   const pool = new Pool({ connectionString: databaseUrl });
-  const db: DrizzleDatabase = drizzle(pool, { schema });
+  const db: DrizzleDatabase = createDrizzleDatabaseFromPool(pool);
 
   return { db, pool };
 }

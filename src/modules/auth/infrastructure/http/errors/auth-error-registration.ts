@@ -11,6 +11,7 @@ import { AccountNotVerifiedError } from '../../../domain/errors/account-not-veri
 import { InvalidCredentialsError } from '../../../domain/errors/invalid-credentials.error';
 import { UserNotFoundError } from '../../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../../domain/errors/email-already-verified.error';
+import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 
 export function registerAuthDomainErrors() {
   DomainErrorMapperRegistry.register(UserAlreadyExistsError, {
@@ -44,6 +45,11 @@ export function registerAuthDomainErrors() {
   });
 
   DomainErrorMapperRegistry.register(InvalidCredentialsError, {
+    status: HttpStatus.UNAUTHORIZED,
+    error: 'Unauthorized',
+  });
+
+  DomainErrorMapperRegistry.register(InvalidRefreshTokenError, {
     status: HttpStatus.UNAUTHORIZED,
     error: 'Unauthorized',
   });

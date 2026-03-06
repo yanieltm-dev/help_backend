@@ -9,6 +9,7 @@ import { AppModule } from '@/app.module';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import { App } from 'supertest/types';
+import { ensureDbAvailable, stubMailProviders } from './utils/e2e-setup';
 
 interface ApiResponse {
   message: string;
@@ -16,11 +17,17 @@ interface ApiResponse {
 
 describe('Auth Verification (e2e)', () => {
   let app: INestApplication;
+  let dbAvailable = true;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const dbCheck = await ensureDbAvailable();
+    dbAvailable = dbCheck.dbAvailable;
+
+    const moduleFixture: TestingModule = await stubMailProviders(
+      Test.createTestingModule({
+        imports: [AppModule],
+      }),
+    ).compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -58,6 +65,7 @@ describe('Auth Verification (e2e)', () => {
   };
 
   it('Verification Flow: Register -> Fail Verification -> Resend -> Succeed', async () => {
+    if (!dbAvailable) return;
     // 1. Register
     const regRes = await request(app.getHttpServer() as App)
       .post('/api/v1/auth/register')

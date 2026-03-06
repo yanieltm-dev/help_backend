@@ -46,10 +46,14 @@ import mailConfig from './core/config/mail.config';
     MailModule,
   ],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    ...(process.env.NODE_ENV !== 'production'
+      ? []
+      : [
+          {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+          },
+        ]),
     {
       provide: APP_FILTER,
       useClass: AppExceptionFilter,

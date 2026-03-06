@@ -13,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import { App } from 'supertest/types';
 import { Pool } from 'pg';
+import cookieParser from 'cookie-parser';
+import { ensureDbAvailable, stubMailProviders } from './utils/e2e-setup';
 
 interface ApiResponse {
   message: string;
@@ -51,27 +53,14 @@ describe('AuthController (e2e)', () => {
   let dbAvailable = true;
 
   beforeAll(async () => {
-    let databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      dbAvailable = false;
-      databaseUrl = 'postgresql://user:secret@127.0.0.1:5432/api';
-      process.env.DATABASE_URL = databaseUrl;
-    } else {
-      try {
-        const pool = new Pool({
-          connectionString: databaseUrl,
-          connectionTimeoutMillis: 1000,
-        });
-        await pool.query('select 1');
-        await pool.end();
-      } catch {
-        dbAvailable = false;
-      }
-    }
+    const dbCheck = await ensureDbAvailable();
+    dbAvailable = dbCheck.dbAvailable;
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const moduleFixture: TestingModule = await stubMailProviders(
+      Test.createTestingModule({
+        imports: [AppModule],
+      }),
+    ).compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -81,6 +70,12 @@ describe('AuthController (e2e)', () => {
     });
 
     app.setGlobalPrefix(apiPrefix);
+
+    app.use(
+      cookieParser(
+        configService.getOrThrow('auth.cookieSecret', { infer: true }),
+      ),
+    );
     app.enableVersioning({
       type: VersioningType.URI,
     });
@@ -242,18 +237,39 @@ describe('AuthController (e2e)', () => {
   describe('Auth refresh and logout flow (e2e)', () => {
     it('Scenario 1: Valid refresh rotates tokens', async () => {
       if (!dbAvailable) return;
-      // Register user
+      // Register a fresh user for this scenario
+      const ts = Date.now();
+      const user = {
+        ...validUser,
+        username: `refreshrotate_${ts}`,
+        email: `refreshrotate_${ts}@example.com`,
+      };
+
       await request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
-        .send(validUser)
+        .send(user)
         .expect(201);
+
+      // Mark email as verified directly in DB to make the user eligible to login
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
 
       // Login to obtain tokens and refresh cookie
       const loginResponse = await request(app.getHttpServer() as App)
         .post('/api/v1/auth/login')
         .send({
-          emailOrUsername: validUser.email,
-          password: validUser.password,
+          emailOrUsername: user.email,
+          password: user.password,
         })
         .expect(200);
 
@@ -279,6 +295,67 @@ describe('AuthController (e2e)', () => {
       expect(refreshResponse.headers['set-cookie']).toBeDefined();
     });
 
+    it('Scenario 1.1: GET /me without token returns 401', async () => {
+      if (!dbAvailable) return;
+
+      await request(app.getHttpServer() as App)
+        .get('/api/v1/auth/me')
+        .expect(401);
+    });
+
+    it('Scenario 1.2: GET /me with access token returns current user', async () => {
+      if (!dbAvailable) return;
+
+      const ts = Date.now();
+      const user = {
+        ...validUser,
+        username: `meuser_${ts}`,
+        email: `me_${ts}@example.com`,
+      };
+
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/register')
+        .send(user)
+        .expect(201);
+
+      // Mark email as verified directly in DB to make the user eligible to login
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
+
+      const loginResponse = await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/login')
+        .send({
+          emailOrUsername: user.email,
+          password: user.password,
+        })
+        .expect(200);
+
+      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
+      expect(accessToken).toBeDefined();
+
+      await request(app.getHttpServer() as App)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id');
+          expect(res.body).toHaveProperty('name', user.name);
+          expect(res.body).toHaveProperty('email', user.email.toLowerCase());
+          expect(res.body).toHaveProperty('image');
+          expect(res.body).toHaveProperty('emailVerified', true);
+        });
+    });
+
     it('Scenario 2: Refresh after logout returns 401', async () => {
       if (!dbAvailable) return;
       // Register and login again with unique email/username
@@ -288,11 +365,24 @@ describe('AuthController (e2e)', () => {
         username: `refreshuser_${ts}`,
         email: `refresh_${ts}@example.com`,
       };
-
       await request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send(user)
         .expect(201);
+
+      // Mark email as verified directly in DB to make the user eligible to login
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
 
       const loginResponse = await request(app.getHttpServer() as App)
         .post('/api/v1/auth/login')
@@ -329,11 +419,24 @@ describe('AuthController (e2e)', () => {
         username: `logoutuser_${ts}`,
         email: `logout_${ts}@example.com`,
       };
-
       await request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send(user)
         .expect(201);
+
+      // Mark email as verified directly in DB to make the user eligible to login
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
 
       const loginResponse = await request(app.getHttpServer() as App)
         .post('/api/v1/auth/login')
@@ -415,11 +518,24 @@ describe('AuthController (e2e)', () => {
         username: `resetlogout_${ts}`,
         email: `resetlogout_${ts}@example.com`,
       };
-
       await request(app.getHttpServer() as App)
         .post('/api/v1/auth/register')
         .send(user)
         .expect(201);
+
+      // Mark email as verified directly in DB to make the user eligible to login
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
 
       const loginResponse = await request(app.getHttpServer() as App)
         .post('/api/v1/auth/login')
