@@ -4,7 +4,7 @@ import * as schema from '@/core/database/schema';
 import type { DrizzleDatabase } from '@/core/database/connection';
 import { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import { VerificationToken } from '@/modules/auth/domain/entities/verification-token.entity';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gte, sql } from 'drizzle-orm';
 
 @Injectable()
 export class DrizzleVerificationRepository implements VerificationRepository {
@@ -12,6 +12,25 @@ export class DrizzleVerificationRepository implements VerificationRepository {
     @Inject(DATABASE_CONNECTION)
     private readonly db: DrizzleDatabase,
   ) {}
+
+  async countRecentForIdentifierAndTypeSince(
+    identifier: string,
+    type: string,
+    since: Date,
+  ): Promise<number> {
+    const rows = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.verification)
+      .where(
+        and(
+          eq(schema.verification.identifier, identifier),
+          eq(schema.verification.type, type),
+          gte(schema.verification.createdAt, since),
+        ),
+      );
+
+    return rows[0]?.count ?? 0;
+  }
 
   async findByIdentifierAndType(
     identifier: string,

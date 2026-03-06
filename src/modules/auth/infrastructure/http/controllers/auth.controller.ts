@@ -17,10 +17,16 @@ import { ResendVerificationUseCase } from '../../../application/use-cases/resend
 import { LoginUseCase } from '../../../application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
+import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password.use-case';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
 import { LoginDto } from '../dto/login.dto';
+import {
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+} from '../dto/password-reset.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterResponseDto } from '../responses/register.response';
 import { LoginResponseDto } from '../responses/login.response';
@@ -49,6 +55,8 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshSessionUseCase: RefreshSessionUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -98,6 +106,39 @@ export class AuthController {
   async resendVerification(@Body() dto: ResendVerificationDto) {
     await this.resendVerificationUseCase.execute(dto);
     return { message: 'Verification email resent' };
+  }
+
+  @Post('request-password-reset')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset OTP' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'If the email exists, a password reset code is sent. The response is always generic.',
+  })
+  @ApiResponse({ status: 422, description: 'Validation failed' })
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    await this.requestPasswordResetUseCase.execute(dto);
+    return {
+      message:
+        'If an account with this email exists, a password reset code has been sent.',
+    };
+  }
+
+  @Post('reset-password')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with OTP' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid, expired, or max attempts exceeded for OTP',
+  })
+  @ApiResponse({ status: 422, description: 'Validation failed' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.resetPasswordUseCase.execute(dto);
+    return { message: 'Password reset successfully' };
   }
 
   @Post('login')

@@ -6,6 +6,8 @@ export class UserRegisteredDomainEvent extends DomainEvent {
     public readonly userId: string,
     public readonly email: string,
     public readonly verificationToken: string,
+    public readonly name: string,
+    public readonly otpExpiresInMs: number,
   ) {
     super();
   }

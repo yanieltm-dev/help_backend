@@ -15,6 +15,8 @@ import { ResendVerificationUseCase } from './application/use-cases/resend-verifi
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
+import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import {
@@ -68,6 +70,72 @@ export const authUseCaseProviders: Provider[] = [
             infer: true,
           }),
         },
+      );
+    },
+  },
+  {
+    provide: RequestPasswordResetUseCase,
+    inject: [
+      USER_REPOSITORY,
+      VERIFICATION_REPOSITORY,
+      PASSWORD_HASHER,
+      EVENT_BUS,
+      ID_GENERATOR,
+      ConfigService,
+    ],
+    useFactory: (
+      userRepo: UserRepository,
+      verificationRepo: VerificationRepository,
+      hasher: PasswordHasher,
+      eventBus: IEventBus,
+      idGenerator: IIdGenerator,
+      configService: ConfigService<AllConfigType>,
+    ) => {
+      return new RequestPasswordResetUseCase(
+        userRepo,
+        verificationRepo,
+        hasher,
+        eventBus,
+        idGenerator,
+        {
+          otpExpiresInMs: configService.getOrThrow('auth.otpExpiresInMs', {
+            infer: true,
+          }),
+          maxRequests: configService.getOrThrow('auth.maxFailedAttempts', {
+            infer: true,
+          }),
+          windowMs: configService.getOrThrow('auth.lockoutDurationMs', {
+            infer: true,
+          }),
+        },
+      );
+    },
+  },
+  {
+    provide: ResetPasswordUseCase,
+    inject: [
+      VERIFICATION_REPOSITORY,
+      USER_REPOSITORY,
+      ACCOUNT_REPOSITORY,
+      SESSION_REPOSITORY,
+      PASSWORD_HASHER,
+      UNIT_OF_WORK,
+    ],
+    useFactory: (
+      verificationRepo: VerificationRepository,
+      userRepo: UserRepository,
+      accountRepo: AccountRepository,
+      sessionRepo: SessionRepository,
+      hasher: PasswordHasher,
+      uow: IUnitOfWork,
+    ) => {
+      return new ResetPasswordUseCase(
+        verificationRepo,
+        userRepo,
+        accountRepo,
+        sessionRepo,
+        hasher,
+        uow,
       );
     },
   },

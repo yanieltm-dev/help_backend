@@ -1,17 +1,18 @@
 import { DomainEvent } from '@/shared/domain/events/domain-event';
 
-export class VerificationResendedDomainEvent extends DomainEvent {
-  static readonly EVENT_NAME = 'verification.resended' as const;
+export class PasswordResetRequestedDomainEvent extends DomainEvent {
+  static readonly EVENT_NAME = 'password.reset.requested' as const;
+
   constructor(
     public readonly email: string,
-    public readonly verificationToken: string,
     public readonly name: string,
+    public readonly otp: string,
     public readonly otpExpiresInMs: number,
   ) {
     super();
   }
 
   get eventName(): string {
-    return VerificationResendedDomainEvent.EVENT_NAME;
+    return PasswordResetRequestedDomainEvent.EVENT_NAME;
   }
 }

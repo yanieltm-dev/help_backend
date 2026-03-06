@@ -13,8 +13,8 @@ export class DrizzleSessionRepository implements SessionRepository {
     private readonly db: DrizzleDatabase,
   ) {}
 
-  async save(session: Session, tx?: DrizzleDatabase): Promise<void> {
-    const db = tx || this.db;
+  async save(session: Session, tx?: unknown): Promise<void> {
+    const db = (tx as DrizzleDatabase | undefined) || this.db;
     await db
       .insert(schema.session)
       .values({
@@ -57,5 +57,10 @@ export class DrizzleSessionRepository implements SessionRepository {
 
   async deleteByToken(token: string): Promise<void> {
     await this.db.delete(schema.session).where(eq(schema.session.token, token));
+  }
+
+  async deleteByUserId(userId: string, tx?: unknown): Promise<void> {
+    const db = (tx as DrizzleDatabase | undefined) || this.db;
+    await db.delete(schema.session).where(eq(schema.session.userId, userId));
   }
 }

@@ -3,6 +3,12 @@ import { VerificationToken } from '../entities/verification-token.entity';
 export interface VerificationRepository {
   save(token: VerificationToken, tx?: unknown): Promise<void>;
 
+  countRecentForIdentifierAndTypeSince(
+    identifier: string,
+    type: string,
+    since: Date,
+  ): Promise<number>;
+
   findByIdentifierAndType(
     identifier: string,
     type: string,

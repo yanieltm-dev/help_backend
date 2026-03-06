@@ -3,6 +3,7 @@ import { AuthController } from './infrastructure/http/controllers/auth.controlle
 import { authUseCaseProviders } from './auth-use-cases.providers';
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
+import { PasswordResetRequestedListener } from './infrastructure/listeners/password-reset-requested.listener';
 import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
 import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
 import { DrizzleProfileRepository } from './infrastructure/persistence/repositories/drizzle-profile.repository';
@@ -49,6 +50,7 @@ import { UuidV7Generator } from '@/shared/infrastructure/services/uuid-v7-genera
     ...authUseCaseProviders,
     UserRegisteredListener,
     VerificationResendedListener,
+    PasswordResetRequestedListener,
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: PROFILE_REPOSITORY, useClass: DrizzleProfileRepository },

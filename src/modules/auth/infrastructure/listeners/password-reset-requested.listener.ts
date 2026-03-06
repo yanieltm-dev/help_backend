@@ -1,32 +1,32 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
+import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
 import { MAIL_SERVICE, type MailService } from '@/shared/mail/mail.interface';
 import { InjectPinoLogger, Logger } from 'pino-nestjs';
 
 @Injectable()
-export class VerificationResendedListener {
+export class PasswordResetRequestedListener {
   constructor(
     @Inject(MAIL_SERVICE)
     private readonly mailService: MailService,
 
-    @InjectPinoLogger(VerificationResendedListener.name)
+    @InjectPinoLogger(PasswordResetRequestedListener.name)
     private readonly logger: Logger,
   ) {}
 
-  @OnEvent(VerificationResendedDomainEvent.EVENT_NAME as string)
-  handleVerificationResended(event: VerificationResendedDomainEvent) {
+  @OnEvent(PasswordResetRequestedDomainEvent.EVENT_NAME as string)
+  handlePasswordResetRequested(event: PasswordResetRequestedDomainEvent) {
     this.mailService
-      .sendVerificationEmail(
+      .sendPasswordResetEmail(
         event.email,
-        event.verificationToken,
+        event.otp,
         event.name,
         event.otpExpiresInMs,
       )
       .catch((error: unknown) => {
         this.logger.error(
           { err: error, email: event.email },
-          'Failed to send verification email on resend',
+          'Failed to send password reset email',
         );
       });
   }

@@ -17,7 +17,12 @@ export class UserRegisteredListener {
   @OnEvent(UserRegisteredDomainEvent.EVENT_NAME as string)
   handleUserRegistered(event: UserRegisteredDomainEvent) {
     this.mailService
-      .sendVerificationEmail(event.email, event.verificationToken)
+      .sendVerificationEmail(
+        event.email,
+        event.verificationToken,
+        event.name,
+        event.otpExpiresInMs,
+      )
       .catch((error: unknown) => {
         this.logger.error(
           { err: error, userId: event.userId },
