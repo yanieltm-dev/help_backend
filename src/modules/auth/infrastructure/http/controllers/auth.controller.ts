@@ -157,7 +157,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
-    const { accessToken, refreshToken, accessTokenExpiresAt } =
+    const { accessToken, refreshToken, accessTokenExpiresAt, user } =
       await this.loginUseCase.execute({
         ...dto,
         ipAddress: req.ip,
@@ -176,6 +176,7 @@ export class AuthController {
     return {
       accessToken,
       accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
+      user,
     };
   }
 

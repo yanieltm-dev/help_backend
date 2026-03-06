@@ -50,6 +50,7 @@ export class RegisterUserUseCase {
     if (existingProfile) throw new UserAlreadyExistsError('username');
 
     // Prepare Data
+    Password.createRaw(password);
     const hashedPassword = await this.hasher.hash(password);
     const userId = this.idGenerator.generate();
     const otp = Otp.generate().value;
@@ -67,6 +68,7 @@ export class RegisterUserUseCase {
       userId,
       username,
       name,
+      null,
       new Date(birthDate),
     );
     const verification = VerificationToken.create(
@@ -89,7 +91,15 @@ export class RegisterUserUseCase {
       await this.verificationRepo.save(verification, tx);
     });
 
-    this.eventBus.publish(new UserRegisteredDomainEvent(userId, email, otp));
+    this.eventBus.publish(
+      new UserRegisteredDomainEvent(
+        userId,
+        email,
+        otp,
+        name,
+        this.config.otpExpiresInMs,
+      ),
+    );
 
     return { userId };
   }

@@ -4,6 +4,7 @@ export class Profile {
     public readonly userId: string,
     public readonly username: string,
     public readonly displayName: string,
+    public readonly avatarUrl: string | null,
     public readonly birthDate: Date,
     public readonly createdAt: Date = new Date(),
   ) {}
@@ -13,6 +14,7 @@ export class Profile {
     userId: string,
     username: string,
     displayName: string,
+    avatarUrl: string | null,
     birthDate: Date,
   ): Profile {
     return new Profile(
@@ -20,6 +22,7 @@ export class Profile {
       userId,
       username.toLowerCase(),
       displayName,
+      avatarUrl,
       birthDate,
     );
   }

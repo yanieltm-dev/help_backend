@@ -11,6 +11,7 @@ import type { Authenticator } from '../ports/authenticator.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import { Account } from '../../domain/entities/account.entity';
 import { Password } from '../../domain/value-objects/password.vo';
+import { Profile } from '../../domain/entities/profile.entity';
 
 jest.mock('@/shared/utils/uuid', () => ({
   generateUuidV7: jest.fn(() => '00000000-0000-0000-0000-000000000000'),
@@ -39,6 +40,7 @@ describe('LoginUseCase', () => {
     } as unknown as jest.Mocked<AccountRepository>;
     profileRepo = {
       findByUsername: jest.fn(),
+      findByUserId: jest.fn(),
       save: jest.fn(),
     } as unknown as jest.Mocked<ProfileRepository>;
     hasher = {
@@ -53,6 +55,7 @@ describe('LoginUseCase', () => {
       save: jest.fn(),
       findByToken: jest.fn(),
       deleteByToken: jest.fn(),
+      deleteByUserId: jest.fn(),
     } as unknown as jest.Mocked<SessionRepository>;
     idGenerator = {
       generate: jest.fn().mockReturnValue('mocked-uuid'),
@@ -80,16 +83,26 @@ describe('LoginUseCase', () => {
     const userId = '00000000-0000-0000-0000-000000000000';
     const user = User.create(userId, emailStr, 'Test User', true);
 
+    const profile = Profile.create(
+      'profile-id',
+      userId,
+      'testuser',
+      'Test User',
+      'https://example.com/avatar.png',
+      new Date('2000-01-01'),
+    );
+
     const account = new Account(
       'account-id',
       userId,
       'credentials',
       emailStr,
-      Password.createRaw('Password123'),
+      Password.createRaw('Password123!'),
     );
 
     userRepo.findByEmail.mockResolvedValue(user);
     accountRepo.findByUserId.mockResolvedValue(account);
+    profileRepo.findByUserId.mockResolvedValue(profile);
     hasher.compare.mockResolvedValue(true);
 
     const tokenExp = new Date();
@@ -108,6 +121,13 @@ describe('LoginUseCase', () => {
       accessToken: 'access-token',
       accessTokenExpiresAt: tokenExp,
       refreshToken: 'refresh-token',
+      user: {
+        id: userId,
+        name: 'Test User',
+        email: emailStr,
+        image: 'https://example.com/avatar.png',
+        emailVerified: true,
+      },
     });
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -133,7 +153,7 @@ describe('LoginUseCase', () => {
       userId,
       'credentials',
       emailStr,
-      Password.createRaw('Password123'),
+      Password.createRaw('Password123!'),
     );
     userRepo.findByEmail.mockResolvedValue(user);
     accountRepo.findByUserId.mockResolvedValue(account);

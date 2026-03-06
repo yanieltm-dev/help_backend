@@ -58,6 +58,13 @@ export class ResendVerificationUseCase {
     );
 
     await this.verificationRepo.save(verification);
-    this.eventBus.publish(new VerificationResendedDomainEvent(email, otp));
+    this.eventBus.publish(
+      new VerificationResendedDomainEvent(
+        email,
+        otp,
+        user.name,
+        this.config.otpExpiresInMs,
+      ),
+    );
   }
 }

@@ -27,6 +27,13 @@ export interface LoginResponse {
   accessToken: string;
   accessTokenExpiresAt: Date;
   refreshToken: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    emailVerified: boolean;
+  };
 }
 
 export class LoginUseCase {
@@ -113,6 +120,19 @@ export class LoginUseCase {
     // Reset failed attempts
     await this.accountRepo.save(account.resetFailedAttempts());
 
-    return { accessToken, refreshToken, accessTokenExpiresAt };
+    const profile = await this.profileRepo.findByUserId(user.id);
+
+    return {
+      accessToken,
+      refreshToken,
+      accessTokenExpiresAt,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email.value,
+        image: profile?.avatarUrl ?? null,
+        emailVerified: user.emailVerified,
+      },
+    };
   }
 }

@@ -23,6 +23,22 @@ export class DrizzleProfileRepository implements ProfileRepository {
       row.userId,
       row.username,
       row.displayName || '',
+      row.avatarUrl ?? null,
+      row.birthDate || new Date(),
+    );
+  }
+
+  async findByUserId(userId: string): Promise<Profile | null> {
+    const row = await this.db.query.profile.findFirst({
+      where: eq(schema.profile.userId, userId),
+    });
+    if (!row) return null;
+    return new Profile(
+      row.id,
+      row.userId,
+      row.username,
+      row.displayName || '',
+      row.avatarUrl ?? null,
       row.birthDate || new Date(),
     );
   }
@@ -34,6 +50,7 @@ export class DrizzleProfileRepository implements ProfileRepository {
       userId: profile.userId,
       username: profile.username,
       displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
       birthDate: profile.birthDate,
     });
   }

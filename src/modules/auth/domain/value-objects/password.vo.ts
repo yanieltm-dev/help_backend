@@ -8,6 +8,15 @@ export class Password {
     if (value.length < 8) {
       throw new Error('Password must be at least 8 characters long');
     }
+
+    if (!/\d/.test(value)) {
+      throw new Error('Password must contain at least one number');
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(value)) {
+      throw new Error('Password must contain at least one special character');
+    }
+
     return new Password(value, false);
   }
 

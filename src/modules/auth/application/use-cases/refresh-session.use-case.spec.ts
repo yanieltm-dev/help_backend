@@ -21,6 +21,7 @@ describe('RefreshSessionUseCase', () => {
       save: jest.fn(),
       findByToken: jest.fn(),
       deleteByToken: jest.fn(),
+      deleteByUserId: jest.fn(),
     } as unknown as jest.Mocked<SessionRepository>;
 
     userRepo = {

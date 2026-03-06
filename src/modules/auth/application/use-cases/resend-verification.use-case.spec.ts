@@ -26,6 +26,7 @@ describe('ResendVerificationUseCase', () => {
       findByEmail: jest.fn(),
     } as unknown as jest.Mocked<UserRepository>;
     verificationRepo = {
+      countRecentForIdentifierAndTypeSince: jest.fn(),
       invalidateAllForIdentifier: jest.fn(),
       save: jest.fn(),
     } as unknown as jest.Mocked<VerificationRepository>;
@@ -72,6 +73,8 @@ describe('ResendVerificationUseCase', () => {
       .calls[0][0] as VerificationResendedDomainEvent;
     expect(event.email).toBe(emailStr);
     expect(event.verificationToken).toMatch(/^\d{6}$/);
+    expect(event.name).toBe('Test User');
+    expect(event.otpExpiresInMs).toBe(3600000);
   });
 
   it('should throw BadRequestException if user not found', async () => {
