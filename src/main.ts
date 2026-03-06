@@ -85,7 +85,7 @@ async function bootstrap() {
     .setTitle('Help API')
     .setDescription('The Help API description')
     .setVersion('1.0')
-    // .addBearerAuth()
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

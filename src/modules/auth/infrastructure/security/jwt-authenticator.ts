@@ -6,6 +6,7 @@ import {
   AuthTokens,
 } from '../../application/ports/authenticator.port';
 import { AllConfigType } from '@/core/config/config.type';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class JwtAuthenticator implements Authenticator {
@@ -18,9 +19,12 @@ export class JwtAuthenticator implements Authenticator {
     sub: string;
     email: string;
   }): Promise<AuthTokens> {
+    const jti = randomUUID();
+    const tokenPayload = { ...payload, jti };
+
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(tokenPayload),
+      this.jwtService.signAsync(tokenPayload, {
         secret: this.configService.getOrThrow('auth.refreshSecret', {
           infer: true,
         }),

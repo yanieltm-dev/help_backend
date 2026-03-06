@@ -17,6 +17,7 @@ import { RefreshSessionUseCase } from './application/use-cases/refresh-session.u
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
+import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
 import {
@@ -256,6 +257,13 @@ export const authUseCaseProviders: Provider[] = [
     inject: [SESSION_REPOSITORY],
     useFactory: (sessionRepo: SessionRepository) => {
       return new LogoutUseCase(sessionRepo);
+    },
+  },
+  {
+    provide: GetMeUseCase,
+    inject: [USER_REPOSITORY, PROFILE_REPOSITORY],
+    useFactory: (userRepo: UserRepository, profileRepo: ProfileRepository) => {
+      return new GetMeUseCase(userRepo, profileRepo);
     },
   },
 ];

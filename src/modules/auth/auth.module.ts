@@ -29,9 +29,12 @@ import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-erro
 import { UNIT_OF_WORK, ID_GENERATOR } from '@/shared/shared.tokens';
 import { DrizzleUnitOfWork } from '@/shared/infrastructure/persistence/drizzle-unit-of-work.adapter';
 import { UuidV7Generator } from '@/shared/infrastructure/services/uuid-v7-generator.adapter';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './infrastructure/security/jwt.strategy';
 
 @Module({
   imports: [
+    PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -51,6 +54,7 @@ import { UuidV7Generator } from '@/shared/infrastructure/services/uuid-v7-genera
     UserRegisteredListener,
     VerificationResendedListener,
     PasswordResetRequestedListener,
+    JwtStrategy,
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: PROFILE_REPOSITORY, useClass: DrizzleProfileRepository },

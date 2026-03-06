@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   Req,
   Res,
+  UseGuards,
   Version,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -19,6 +21,7 @@ import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-se
 import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
 import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password.use-case';
+import { GetMeUseCase } from '../../../application/use-cases/get-me.use-case';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
@@ -27,9 +30,18 @@ import {
   RequestPasswordResetDto,
   ResetPasswordDto,
 } from '../dto/password-reset.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RegisterResponseDto } from '../responses/register.response';
 import { LoginResponseDto } from '../responses/login.response';
+import { MeResponseDto } from '../responses/me.response';
+import { JwtAuthGuard } from '../../security/guards/jwt-auth.guard';
+import { CurrentAuth } from '../decorators/current-auth.decorator';
+import type { AuthenticatedRequestUser } from '../../security/jwt.strategy';
 
 function getCookie(req: Request, name: string): string | undefined {
   const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })
@@ -57,6 +69,7 @@ export class AuthController {
     private readonly logoutUseCase: LogoutUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly getMeUseCase: GetMeUseCase,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -243,5 +256,19 @@ export class AuthController {
     });
 
     return { message: 'Logged out' };
+  }
+
+  @Get('me')
+  @Version('1')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiResponse({ status: 200, type: MeResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async me(
+    @CurrentAuth() auth: AuthenticatedRequestUser,
+  ): Promise<MeResponseDto> {
+    return this.getMeUseCase.execute({ userId: auth.userId });
   }
 }
