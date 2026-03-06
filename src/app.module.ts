@@ -12,11 +12,12 @@ import { DatabaseModule } from './core/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './shared/mail/mail.module';
 import authConfig from './core/config/auth.config';
+import mailConfig from './core/config/mail.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, databaseConfig, authConfig],
+      load: [appConfig, databaseConfig, authConfig, mailConfig],
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
       cache: true,

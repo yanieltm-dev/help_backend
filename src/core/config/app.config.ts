@@ -7,6 +7,7 @@ export type AppConfig = {
   name: string;
   port: number;
   apiPrefix: string;
+  backendDomain: string;
 };
 
 enum Environment {
@@ -30,6 +31,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   API_PREFIX: string;
+
+  @IsString()
+  @IsOptional()
+  BACKEND_DOMAIN?: string;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -40,5 +45,6 @@ export default registerAs<AppConfig>('app', () => {
     name: process.env.APP_NAME || 'app',
     port: process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000,
     apiPrefix: process.env.API_PREFIX || 'api',
+    backendDomain: process.env.APP_URL || 'http://localhost:3000',
   };
 });
