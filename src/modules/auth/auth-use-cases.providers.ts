@@ -147,14 +147,41 @@ export const authUseCaseProviders: Provider[] = [
       VERIFICATION_REPOSITORY,
       PASSWORD_HASHER,
       UNIT_OF_WORK,
+      AUTHENTICATOR,
+      SESSION_REPOSITORY,
+      PROFILE_REPOSITORY,
+      ID_GENERATOR,
+      ConfigService,
     ],
     useFactory: (
       userRepo: UserRepository,
       verificationRepo: VerificationRepository,
       hasher: PasswordHasher,
       uow: IUnitOfWork,
+      authenticator: Authenticator,
+      sessionRepo: SessionRepository,
+      profileRepo: ProfileRepository,
+      idGenerator: IIdGenerator,
+      configService: ConfigService<AllConfigType>,
     ) => {
-      return new VerifyEmailUseCase(userRepo, verificationRepo, hasher, uow);
+      return new VerifyEmailUseCase(
+        userRepo,
+        verificationRepo,
+        hasher,
+        uow,
+        authenticator,
+        sessionRepo,
+        profileRepo,
+        idGenerator,
+        {
+          sessionExpiresInMs: configService.getOrThrow(
+            'auth.sessionExpiresInMs',
+            {
+              infer: true,
+            },
+          ),
+        },
+      );
     },
   },
   {

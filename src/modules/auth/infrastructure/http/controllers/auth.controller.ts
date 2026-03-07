@@ -95,15 +95,38 @@ export class AuthController {
   @Version('1')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify user email with OTP' })
-  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 200, type: LoginResponseDto })
   @ApiResponse({
     status: 400,
     description: 'Invalid, expired, or max attempts exceeded for OTP',
   })
   @ApiResponse({ status: 422, description: 'Validation failed' })
-  async verifyEmail(@Body() dto: VerifyEmailDto) {
-    await this.verifyEmailUseCase.execute(dto);
-    return { message: 'Email verified successfully' };
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginResponseDto> {
+    const { accessToken, refreshToken, accessTokenExpiresAt, user } =
+      await this.verifyEmailUseCase.execute({
+        ...dto,
+        ipAddress: req.ip,
+        userAgent: getUserAgent(req),
+      });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
+        infer: true,
+      }),
+    });
+
+    return {
+      accessToken,
+      accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
+      user,
+    };
   }
 
   @Post('resend-verification')
