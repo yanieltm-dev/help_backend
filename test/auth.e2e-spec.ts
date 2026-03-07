@@ -1,20 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  HttpStatus,
-  INestApplication,
-  UnprocessableEntityException,
-  ValidationError,
-  ValidationPipe,
-  VersioningType,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '@/app.module';
-import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
 import { App } from 'supertest/types';
 import { Pool } from 'pg';
-import cookieParser from 'cookie-parser';
-import { ensureDbAvailable, stubMailProviders } from './utils/e2e-setup';
+import { bootstrapE2eApp } from './utils/bootstrap-e2e-app';
 
 interface ApiResponse {
   message: string;
@@ -53,72 +41,12 @@ describe('AuthController (e2e)', () => {
   let dbAvailable = true;
 
   beforeAll(async () => {
-    const dbCheck = await ensureDbAvailable();
-    dbAvailable = dbCheck.dbAvailable;
-
-    const moduleFixture: TestingModule = await stubMailProviders(
-      Test.createTestingModule({
-        imports: [AppModule],
-      }),
-    ).compile();
-
-    app = moduleFixture.createNestApplication();
-
-    const configService = app.get(ConfigService<AllConfigType>);
-    const apiPrefix = configService.getOrThrow('app.apiPrefix', {
-      infer: true,
+    const bootstrapResult = await bootstrapE2eApp({
+      validationMode: 'production',
+      useCookieParser: true,
     });
-
-    app.setGlobalPrefix(apiPrefix);
-
-    app.use(
-      cookieParser(
-        configService.getOrThrow('auth.cookieSecret', { infer: true }),
-      ),
-    );
-    app.enableVersioning({
-      type: VersioningType.URI,
-    });
-
-    // Replicate production ValidationPipe
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        exceptionFactory: (errors: ValidationError[]) => {
-          const formatErrors = (
-            errors: ValidationError[],
-            parentProperty: string = '',
-          ) => {
-            return errors.reduce((acc: Record<string, string[]>, error) => {
-              const property = parentProperty
-                ? `${parentProperty}.${error.property}`
-                : error.property;
-
-              if (error.constraints) {
-                acc[property] = Object.values(error.constraints);
-              }
-
-              if (error.children && error.children.length > 0) {
-                Object.assign(acc, formatErrors(error.children, property));
-              }
-
-              return acc;
-            }, {});
-          };
-
-          return new UnprocessableEntityException({
-            statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-            message: 'Validation failed',
-            errors: formatErrors(errors),
-          });
-        },
-      }),
-    );
-
-    await app.init();
+    app = bootstrapResult.app;
+    dbAvailable = bootstrapResult.dbAvailable;
   });
 
   afterAll(async () => {

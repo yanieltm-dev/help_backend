@@ -1,15 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  INestApplication,
-  ValidationPipe,
-  VersioningType,
-} from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '@/app.module';
-import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
 import { App } from 'supertest/types';
-import { ensureDbAvailable, stubMailProviders } from './utils/e2e-setup';
+import { bootstrapE2eApp } from './utils/bootstrap-e2e-app';
 
 interface ApiResponse {
   message: string;
@@ -20,35 +12,12 @@ describe('Auth Verification (e2e)', () => {
   let dbAvailable = true;
 
   beforeAll(async () => {
-    const dbCheck = await ensureDbAvailable();
-    dbAvailable = dbCheck.dbAvailable;
-
-    const moduleFixture: TestingModule = await stubMailProviders(
-      Test.createTestingModule({
-        imports: [AppModule],
-      }),
-    ).compile();
-
-    app = moduleFixture.createNestApplication();
-
-    const configService = app.get(ConfigService<AllConfigType>);
-    const apiPrefix = configService.getOrThrow('app.apiPrefix', {
-      infer: true,
+    const bootstrapResult = await bootstrapE2eApp({
+      validationMode: 'default',
+      useCookieParser: false,
     });
-
-    app.setGlobalPrefix(apiPrefix);
-    app.enableVersioning({
-      type: VersioningType.URI,
-    });
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-      }),
-    );
-
-    await app.init();
+    app = bootstrapResult.app;
+    dbAvailable = bootstrapResult.dbAvailable;
   });
 
   afterAll(async () => {
