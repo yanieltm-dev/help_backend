@@ -213,6 +213,18 @@ export const authUseCaseProviders: Provider[] = [
           otpExpiresInMs: configService.getOrThrow('auth.otpExpiresInMs', {
             infer: true,
           }),
+          maxRequests: configService.getOrThrow(
+            'auth.resendVerificationMaxRequests',
+            {
+              infer: true,
+            },
+          ),
+          windowMs: configService.getOrThrow(
+            'auth.resendVerificationWindowMs',
+            {
+              infer: true,
+            },
+          ),
         },
       );
     },

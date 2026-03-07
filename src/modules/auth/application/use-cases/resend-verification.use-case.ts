@@ -1,5 +1,7 @@
 export type ResendVerificationUseCaseConfig = {
   otpExpiresInMs: number;
+  maxRequests: number;
+  windowMs: number;
 };
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
@@ -38,8 +40,17 @@ export class ResendVerificationUseCase {
       throw new EmailAlreadyVerifiedError();
     }
 
-    // TODO: Implement rate limiting (max 3 resends per hour)
-    // For now, we just invalidate previous ones
+    const windowStart = new Date(Date.now() - this.config.windowMs);
+    const recentCount =
+      await this.verificationRepo.countRecentForIdentifierAndTypeSince(
+        email,
+        'email_verification',
+        windowStart,
+      );
+
+    if (recentCount >= this.config.maxRequests) {
+      return;
+    }
 
     await this.verificationRepo.invalidateAllForIdentifier(
       email,

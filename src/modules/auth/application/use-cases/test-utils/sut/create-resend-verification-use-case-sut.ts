@@ -57,7 +57,7 @@ export function createResendVerificationUseCaseSut(
       resolvedHasher,
       resolvedEventBus,
       resolvedIdGenerator,
-      { otpExpiresInMs: 3600000 },
+      { otpExpiresInMs: 3600000, maxRequests: 3, windowMs: 3600000 },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,

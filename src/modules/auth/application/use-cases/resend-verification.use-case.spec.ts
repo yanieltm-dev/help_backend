@@ -25,6 +25,7 @@ describe('ResendVerificationUseCase', () => {
     userRepo = sut.userRepo;
     verificationRepo = sut.verificationRepo;
     eventBus = sut.eventBus;
+    verificationRepo.countRecentForIdentifierAndTypeSince.mockResolvedValue(0);
   });
 
   it('should publish VerificationResendedDomainEvent when successful', async () => {
@@ -72,6 +73,29 @@ describe('ResendVerificationUseCase', () => {
     await expect(useCase.execute({ email: emailStr })).rejects.toThrow(
       EmailAlreadyVerifiedError,
     );
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(eventBus.publish).not.toHaveBeenCalled();
+  });
+
+  it('should not resend verification email when rate limit is exceeded', async () => {
+    const emailStr = 'test@example.com';
+    const user = User.create('user-id', emailStr, 'Test User', false);
+    userRepo.findByEmail.mockResolvedValue(user);
+    verificationRepo.countRecentForIdentifierAndTypeSince.mockResolvedValue(3);
+
+    await useCase.execute({ email: emailStr });
+
+    const firstCall =
+      verificationRepo.countRecentForIdentifierAndTypeSince.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const [actualIdentifier, actualType, actualSince] = firstCall;
+    expect(actualIdentifier).toBe(emailStr);
+    expect(actualType).toBe('email_verification');
+    expect(actualSince).toBeInstanceOf(Date);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(verificationRepo.invalidateAllForIdentifier).not.toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(verificationRepo.save).not.toHaveBeenCalled();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(eventBus.publish).not.toHaveBeenCalled();
   });

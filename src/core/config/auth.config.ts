@@ -12,6 +12,8 @@ export type AuthConfig = {
   lockoutDurationMs: number;
   otpExpiresInMs: number;
   sessionExpiresInMs: number;
+  resendVerificationMaxRequests: number;
+  resendVerificationWindowMs: number;
 };
 
 class EnvironmentVariables {
@@ -46,6 +48,14 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   AUTH_SESSION_EXPIRES_IN_MS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_RESEND_VERIFICATION_MAX_REQUESTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_RESEND_VERIFICATION_WINDOW_MS?: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -70,6 +80,14 @@ export default registerAs<AuthConfig>('auth', () => {
     ),
     sessionExpiresInMs: parseInt(
       process.env.AUTH_SESSION_EXPIRES_IN_MS || '604800000',
+      10,
+    ),
+    resendVerificationMaxRequests: parseInt(
+      process.env.AUTH_RESEND_VERIFICATION_MAX_REQUESTS || '3',
+      10,
+    ),
+    resendVerificationWindowMs: parseInt(
+      process.env.AUTH_RESEND_VERIFICATION_WINDOW_MS || '3600000',
       10,
     ),
     cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
