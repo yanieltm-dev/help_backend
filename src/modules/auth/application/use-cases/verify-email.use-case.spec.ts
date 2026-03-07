@@ -49,6 +49,10 @@ describe('VerifyEmailUseCase', () => {
     } as unknown as jest.Mocked<Authenticator>;
     sessionRepo = {
       save: jest.fn(),
+      findByToken: jest.fn(),
+      deleteByToken: jest.fn(),
+      deleteByUserId: jest.fn(),
+      deleteByUserIdExceptToken: jest.fn(),
     } as unknown as jest.Mocked<SessionRepository>;
     profileRepo = {
       findByUserId: jest.fn(),

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '@/core/database/database.module';
 import * as schema from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import type { DrizzleDatabase } from '@/core/database/connection';
 import { Session } from '@/modules/auth/domain/entities/session.entity';
 import { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
@@ -62,5 +62,21 @@ export class DrizzleSessionRepository implements SessionRepository {
   async deleteByUserId(userId: string, tx?: unknown): Promise<void> {
     const db = (tx as DrizzleDatabase | undefined) || this.db;
     await db.delete(schema.session).where(eq(schema.session.userId, userId));
+  }
+
+  async deleteByUserIdExceptToken(
+    userId: string,
+    exceptToken: string,
+    tx?: unknown,
+  ): Promise<void> {
+    const db = (tx as DrizzleDatabase | undefined) || this.db;
+    await db
+      .delete(schema.session)
+      .where(
+        and(
+          eq(schema.session.userId, userId),
+          ne(schema.session.token, exceptToken),
+        ),
+      );
   }
 }

@@ -42,6 +42,7 @@ describe('ResetPasswordUseCase', () => {
       findByToken: jest.fn(),
       deleteByToken: jest.fn(),
       deleteByUserId: jest.fn(),
+      deleteByUserIdExceptToken: jest.fn(),
     } as unknown as jest.Mocked<SessionRepository>;
     hasher = {
       compare: jest.fn(),

@@ -570,4 +570,195 @@ describe('AuthController (e2e)', () => {
         .expect(200);
     });
   });
+
+  describe('Change password flow (e2e)', () => {
+    it('Scenario 1: Changes password and revokes other sessions but keeps current', async () => {
+      if (!dbAvailable) return;
+
+      const ts = Date.now();
+      const user = {
+        ...validUser,
+        username: `changepw_${ts}`,
+        email: `changepw_${ts}@example.com`,
+      };
+
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/register')
+        .send(user)
+        .expect(201);
+
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
+
+      const firstLoginResponse = await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/login')
+        .send({
+          emailOrUsername: user.email,
+          password: user.password,
+        })
+        .expect(200);
+
+      const firstAccessToken = (firstLoginResponse.body as LoginResponseBody)
+        .accessToken;
+      const firstCookies = getSetCookieHeader(
+        firstLoginResponse as unknown as {
+          headers: Record<string, unknown>;
+        },
+      );
+
+      const secondLoginResponse = await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/login')
+        .send({
+          emailOrUsername: user.email,
+          password: user.password,
+        })
+        .expect(200);
+
+      const secondCookies = getSetCookieHeader(
+        secondLoginResponse as unknown as {
+          headers: Record<string, unknown>;
+        },
+      );
+
+      await request(app.getHttpServer() as App)
+        .patch('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${firstAccessToken}`)
+        .set('Cookie', firstCookies)
+        .send({
+          currentPassword: user.password,
+          newPassword: 'NewPassword123!',
+        })
+        .expect(200);
+
+      // Current session should still work
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', firstCookies)
+        .expect(200);
+
+      // Other session should be revoked
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', secondCookies)
+        .expect(401);
+    });
+
+    it('Scenario 2: Wrong current password returns 401', async () => {
+      if (!dbAvailable) return;
+
+      const ts = Date.now();
+      const user = {
+        ...validUser,
+        username: `changepw_wrong_${ts}`,
+        email: `changepw_wrong_${ts}@example.com`,
+      };
+
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/register')
+        .send(user)
+        .expect(201);
+
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
+
+      const loginResponse = await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/login')
+        .send({
+          emailOrUsername: user.email,
+          password: user.password,
+        })
+        .expect(200);
+
+      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
+      const cookies = getSetCookieHeader(
+        loginResponse as unknown as {
+          headers: Record<string, unknown>;
+        },
+      );
+
+      await request(app.getHttpServer() as App)
+        .patch('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', cookies)
+        .send({
+          currentPassword: 'WrongPassword123!',
+          newPassword: 'NewPassword123!',
+        })
+        .expect(401);
+    });
+
+    it('Scenario 3: Invalid new password returns 422', async () => {
+      if (!dbAvailable) return;
+
+      const ts = Date.now();
+      const user = {
+        ...validUser,
+        username: `changepw_invalid_${ts}`,
+        email: `changepw_invalid_${ts}@example.com`,
+      };
+
+      await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/register')
+        .send(user)
+        .expect(201);
+
+      const databaseUrl = process.env.DATABASE_URL;
+      expect(databaseUrl).toBeDefined();
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 1000,
+      });
+      await pool.query(
+        'update "user" set email_verified = true, status = \'active\' where email = $1',
+        [user.email.toLowerCase()],
+      );
+      await pool.end();
+
+      const loginResponse = await request(app.getHttpServer() as App)
+        .post('/api/v1/auth/login')
+        .send({
+          emailOrUsername: user.email,
+          password: user.password,
+        })
+        .expect(200);
+
+      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
+      const cookies = getSetCookieHeader(
+        loginResponse as unknown as {
+          headers: Record<string, unknown>;
+        },
+      );
+
+      await request(app.getHttpServer() as App)
+        .patch('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', cookies)
+        .send({
+          currentPassword: user.password,
+          newPassword: '123',
+        })
+        .expect(422);
+    });
+  });
 });

@@ -12,6 +12,8 @@ import { InvalidCredentialsError } from '../../../domain/errors/invalid-credenti
 import { UserNotFoundError } from '../../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../../domain/errors/email-already-verified.error';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
+import { InvalidCurrentPasswordError } from '../../../domain/errors/invalid-current-password.error';
+import { InvalidNewPasswordError } from '../../../domain/errors/invalid-new-password.error';
 
 export function registerAuthDomainErrors() {
   DomainErrorMapperRegistry.register(UserAlreadyExistsError, {
@@ -52,6 +54,16 @@ export function registerAuthDomainErrors() {
   DomainErrorMapperRegistry.register(InvalidRefreshTokenError, {
     status: HttpStatus.UNAUTHORIZED,
     error: 'Unauthorized',
+  });
+
+  DomainErrorMapperRegistry.register(InvalidCurrentPasswordError, {
+    status: HttpStatus.UNAUTHORIZED,
+    error: 'Unauthorized',
+  });
+
+  DomainErrorMapperRegistry.register(InvalidNewPasswordError, {
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    error: 'Unprocessable Entity',
   });
 
   DomainErrorMapperRegistry.register(UserNotFoundError, {

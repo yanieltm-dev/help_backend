@@ -5,4 +5,9 @@ export interface SessionRepository {
   findByToken(token: string): Promise<Session | null>;
   deleteByToken(token: string): Promise<void>;
   deleteByUserId(userId: string, tx?: unknown): Promise<void>;
+  deleteByUserIdExceptToken(
+    userId: string,
+    exceptToken: string,
+    tx?: unknown,
+  ): Promise<void>;
 }

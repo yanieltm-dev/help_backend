@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -22,6 +23,7 @@ import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
 import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password.use-case';
 import { GetMeUseCase } from '../../../application/use-cases/get-me.use-case';
+import { ChangePasswordUseCase } from '../../../application/use-cases/change-password.use-case';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { RegisterDto } from '../dto/register.dto';
 import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
@@ -42,6 +44,7 @@ import { MeResponseDto } from '../responses/me.response';
 import { JwtAuthGuard } from '../../security/guards/jwt-auth.guard';
 import { CurrentAuth } from '../decorators/current-auth.decorator';
 import type { AuthenticatedRequestUser } from '../../security/jwt.strategy';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 
 function getCookie(req: Request, name: string): string | undefined {
   const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })
@@ -70,6 +73,7 @@ export class AuthController {
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly getMeUseCase: GetMeUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -293,5 +297,29 @@ export class AuthController {
     @CurrentAuth() auth: AuthenticatedRequestUser,
   ): Promise<MeResponseDto> {
     return this.getMeUseCase.execute({ userId: auth.userId });
+  }
+
+  @Patch('change-password')
+  @Version('1')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change current user password' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Validation failed' })
+  async changePassword(
+    @CurrentAuth() auth: AuthenticatedRequestUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const refreshToken = getCookie(req, 'refresh_token') ?? '';
+    await this.changePasswordUseCase.execute({
+      userId: auth.userId,
+      currentPassword: dto.currentPassword,
+      newPassword: dto.newPassword,
+      currentRefreshToken: refreshToken,
+    });
+    return { message: 'Password changed successfully' };
   }
 }
