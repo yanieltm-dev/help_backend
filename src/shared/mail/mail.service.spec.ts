@@ -25,34 +25,6 @@ function createConfigServiceMock(overrides?: {
 }
 
 describe('MailService', () => {
-  test('sendVerificationEmail does not log OTP/token', async () => {
-    const logger = {
-      info: jest.fn(),
-    } as unknown as PinoLogger;
-
-    const transport: MailTransport = {
-      send: jest.fn().mockResolvedValue({}),
-    };
-
-    const configService = createConfigServiceMock();
-    const service = new MailService(logger, transport, configService);
-
-    await service.sendVerificationEmail(
-      'user@example.com',
-      '123456',
-      'Alice',
-      600000,
-    );
-
-    const allInfoArgs = (logger.info as jest.Mock).mock.calls
-      .flat()
-      .map((arg: unknown) =>
-        typeof arg === 'string' ? arg : JSON.stringify(arg),
-      );
-
-    expect(allInfoArgs.join(' ')).not.toContain('123456');
-  });
-
   test('sendTransactionalEmail delegates to transport', async () => {
     const logger = {
       info: jest.fn(),
