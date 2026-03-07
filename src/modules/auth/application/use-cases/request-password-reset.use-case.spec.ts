@@ -1,47 +1,23 @@
 import { RequestPasswordResetUseCase } from './request-password-reset.use-case';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
-import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { User } from '../../domain/entities/user.entity';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
+import { createRequestPasswordResetUseCaseSut } from './test-utils/sut/create-request-password-reset-use-case-sut';
 
 describe('RequestPasswordResetUseCase', () => {
   let useCase: RequestPasswordResetUseCase;
   let userRepo: jest.Mocked<UserRepository>;
   let verificationRepo: jest.Mocked<VerificationRepository>;
-  let hasher: jest.Mocked<PasswordHasher>;
   let eventBus: jest.Mocked<IEventBus>;
-  let idGenerator: jest.Mocked<IIdGenerator>;
 
   beforeEach(() => {
-    userRepo = {
-      findByEmail: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-    verificationRepo = {
-      countRecentForIdentifierAndTypeSince: jest.fn(),
-      invalidateAllForIdentifier: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<VerificationRepository>;
-    hasher = {
-      hash: jest.fn().mockResolvedValue('hashed_otp'),
-    } as unknown as jest.Mocked<PasswordHasher>;
-    eventBus = {
-      publish: jest.fn(),
-    } as unknown as jest.Mocked<IEventBus>;
-    idGenerator = {
-      generate: jest.fn().mockReturnValue('verification-id'),
-    } as unknown as jest.Mocked<IIdGenerator>;
-
-    useCase = new RequestPasswordResetUseCase(
-      userRepo,
-      verificationRepo,
-      hasher,
-      eventBus,
-      idGenerator,
-      { otpExpiresInMs: 600000, maxRequests: 5, windowMs: 900000 },
-    );
+    const sut = createRequestPasswordResetUseCaseSut();
+    useCase = sut.useCase;
+    userRepo = sut.userRepo;
+    verificationRepo = sut.verificationRepo;
+    eventBus = sut.eventBus;
   });
 
   it('publishes PasswordResetRequestedDomainEvent when user exists', async () => {

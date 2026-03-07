@@ -2,44 +2,24 @@ import { ChangePasswordUseCase } from './change-password.use-case';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Account } from '../../domain/entities/account.entity';
 import { Password } from '../../domain/value-objects/password.vo';
 import { InvalidCurrentPasswordError } from '../../domain/errors/invalid-current-password.error';
 import { InvalidNewPasswordError } from '../../domain/errors/invalid-new-password.error';
+import { createChangePasswordUseCaseSut } from './test-utils/sut/create-change-password-use-case-sut';
 
 describe('ChangePasswordUseCase', () => {
   let useCase: ChangePasswordUseCase;
   let accountRepo: jest.Mocked<AccountRepository>;
   let sessionRepo: jest.Mocked<SessionRepository>;
   let hasher: jest.Mocked<PasswordHasher>;
-  let uow: jest.Mocked<IUnitOfWork>;
 
   beforeEach(() => {
-    accountRepo = {
-      findByUserId: jest.fn(),
-      save: jest.fn(),
-    };
-    sessionRepo = {
-      save: jest.fn(),
-      findByToken: jest.fn(),
-      deleteByToken: jest.fn(),
-      deleteByUserId: jest.fn(),
-      deleteByUserIdExceptToken: jest.fn(),
-    };
-    hasher = {
-      compare: jest.fn(),
-      hash: jest.fn(),
-    };
-    uow = {
-      run: jest
-        .fn()
-        .mockImplementation(<T>(work: (tx?: unknown) => Promise<T>) =>
-          work({} as unknown),
-        ),
-    } as unknown as jest.Mocked<IUnitOfWork>;
-
-    useCase = new ChangePasswordUseCase(accountRepo, sessionRepo, hasher, uow);
+    const sut = createChangePasswordUseCaseSut();
+    useCase = sut.useCase;
+    accountRepo = sut.accountRepo;
+    sessionRepo = sut.sessionRepo;
+    hasher = sut.hasher;
   });
 
   it('changes password and invalidates sessions except current one', async () => {

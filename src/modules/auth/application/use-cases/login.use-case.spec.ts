@@ -2,16 +2,15 @@ import { LoginUseCase } from './login.use-case';
 
 import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
 import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
-import { User } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { Authenticator } from '../ports/authenticator.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import { Account } from '../../domain/entities/account.entity';
 import { Password } from '../../domain/value-objects/password.vo';
-import { Profile } from '../../domain/entities/profile.entity';
+import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
+import { createLoginUseCaseSut } from './test-utils/sut/create-login-use-case-sut';
 
 jest.mock('@/shared/utils/uuid', () => ({
   generateUuidV7: jest.fn(() => '00000000-0000-0000-0000-000000000000'),
@@ -24,75 +23,34 @@ describe('LoginUseCase', () => {
   let profileRepo: jest.Mocked<ProfileRepository>;
   let hasher: jest.Mocked<PasswordHasher>;
   let authenticator: jest.Mocked<Authenticator>;
-  let sessionRepo: jest.Mocked<SessionRepository>;
-  let idGenerator: { generate: jest.Mock };
 
   beforeEach(() => {
-    userRepo = {
-      findByEmail: jest.fn(),
-      findById: jest.fn(),
-      findByUsername: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-    accountRepo = {
-      findByUserId: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<AccountRepository>;
-    profileRepo = {
-      findByUsername: jest.fn(),
-      findByUserId: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<ProfileRepository>;
-    hasher = {
-      compare: jest.fn(),
-      hash: jest.fn(),
-    } as unknown as jest.Mocked<PasswordHasher>;
-    authenticator = {
-      generateTokens: jest.fn(),
-      verifyToken: jest.fn(),
-    } as unknown as jest.Mocked<Authenticator>;
-    sessionRepo = {
-      save: jest.fn(),
-      findByToken: jest.fn(),
-      deleteByToken: jest.fn(),
-      deleteByUserId: jest.fn(),
-      deleteByUserIdExceptToken: jest.fn(),
-    } as unknown as jest.Mocked<SessionRepository>;
-    idGenerator = {
-      generate: jest.fn().mockReturnValue('mocked-uuid'),
-    };
-
-    useCase = new LoginUseCase(
-      userRepo,
-      accountRepo,
-      profileRepo,
-      hasher,
-      authenticator,
-      sessionRepo,
-      idGenerator,
-      {
-        maxFailedAttempts: 5,
-        lockoutDurationMs: 900000,
-        sessionExpiresInMs: 3600000,
-      },
-    );
+    const sut = createLoginUseCaseSut();
+    useCase = sut.useCase;
+    userRepo = sut.userRepo;
+    accountRepo = sut.accountRepo;
+    profileRepo = sut.profileRepo;
+    hasher = sut.hasher;
+    authenticator = sut.authenticator;
   });
 
   it('should return tokens and expiration date on successful login', async () => {
     const emailStr = 'test@example.com';
     const passwordStr = 'password';
     const userId = '00000000-0000-0000-0000-000000000000';
-    const user = User.create(userId, emailStr, 'Test User', true);
-
-    const profile = Profile.create(
-      'profile-id',
+    const user = AuthEntitiesTestFactory.createUser({
+      id: userId,
+      email: emailStr,
+      name: 'Test User',
+      isEmailVerified: true,
+    });
+    const profile = AuthEntitiesTestFactory.createProfile({
       userId,
-      'testuser',
-      'Test User',
-      'https://example.com/avatar.png',
-      new Date('2000-01-01'),
-    );
-
+      name: 'Test User',
+      username: 'testuser',
+      avatarUrl: 'https://example.com/avatar.png',
+      birthDate: new Date('2000-01-01'),
+    });
     const account = new Account(
       'account-id',
       userId,
@@ -148,7 +106,12 @@ describe('LoginUseCase', () => {
   it('should throw AccountNotVerifiedError if email not verified', async () => {
     const userId = '00000000-0000-0000-0000-000000000000';
     const emailStr = 'test@test.com';
-    const user = User.create(userId, emailStr, 'Test User', false);
+    const user = AuthEntitiesTestFactory.createUser({
+      id: userId,
+      email: emailStr,
+      name: 'Test User',
+      isEmailVerified: false,
+    });
     const account = new Account(
       'account-id',
       userId,

@@ -1,19 +1,14 @@
 import { LogoutUseCase } from '@/modules/auth/application/use-cases/logout.use-case';
 
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
+import { AuthUseCaseTestKit } from './test-utils/auth-use-case-test-kit';
 
 describe('LogoutUseCase', () => {
   let useCase: LogoutUseCase;
   let sessionRepo: jest.Mocked<SessionRepository>;
 
   beforeEach(() => {
-    sessionRepo = {
-      save: jest.fn(),
-      findByToken: jest.fn(),
-      deleteByToken: jest.fn(),
-      deleteByUserId: jest.fn(),
-      deleteByUserIdExceptToken: jest.fn(),
-    } as unknown as jest.Mocked<SessionRepository>;
+    sessionRepo = AuthUseCaseTestKit.createSessionRepositoryMock();
 
     useCase = new LogoutUseCase(sessionRepo);
   });

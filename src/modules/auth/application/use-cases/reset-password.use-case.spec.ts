@@ -4,16 +4,14 @@ import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { VerificationToken } from '../../domain/entities/verification-token.entity';
-import { User } from '../../domain/entities/user.entity';
-import { Account } from '../../domain/entities/account.entity';
 import {
   ExpiredOtpError,
   InvalidOtpError,
   MaxAttemptsExceededError,
 } from '../../domain/errors/otp.errors';
-import { Password } from '../../domain/value-objects/password.vo';
+import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
+import { createResetPasswordUseCaseSut } from './test-utils/sut/create-reset-password-use-case-sut';
 
 describe('ResetPasswordUseCase', () => {
   let useCase: ResetPasswordUseCase;
@@ -22,67 +20,40 @@ describe('ResetPasswordUseCase', () => {
   let accountRepo: jest.Mocked<AccountRepository>;
   let sessionRepo: jest.Mocked<SessionRepository>;
   let hasher: jest.Mocked<PasswordHasher>;
-  let uow: jest.Mocked<IUnitOfWork>;
 
   beforeEach(() => {
-    verificationRepo = {
-      findByIdentifierAndType: jest.fn(),
-      save: jest.fn(),
-      delete: jest.fn(),
-    } as unknown as jest.Mocked<VerificationRepository>;
-    userRepo = {
-      findByEmail: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-    accountRepo = {
-      findByUserId: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<AccountRepository>;
-    sessionRepo = {
-      save: jest.fn(),
-      findByToken: jest.fn(),
-      deleteByToken: jest.fn(),
-      deleteByUserId: jest.fn(),
-      deleteByUserIdExceptToken: jest.fn(),
-    } as unknown as jest.Mocked<SessionRepository>;
-    hasher = {
-      compare: jest.fn(),
-      hash: jest.fn().mockResolvedValue('hashed-new-password'),
-    } as unknown as jest.Mocked<PasswordHasher>;
-    uow = {
-      run: jest.fn(async (fn: (tx: unknown) => Promise<void>) => {
-        await fn({} as unknown);
-      }),
-    } as unknown as jest.Mocked<IUnitOfWork>;
-
-    useCase = new ResetPasswordUseCase(
-      verificationRepo,
-      userRepo,
-      accountRepo,
-      sessionRepo,
-      hasher,
-      uow,
-    );
+    const sut = createResetPasswordUseCaseSut();
+    useCase = sut.useCase;
+    verificationRepo = sut.verificationRepo;
+    userRepo = sut.userRepo;
+    accountRepo = sut.accountRepo;
+    sessionRepo = sut.sessionRepo;
+    hasher = sut.hasher;
   });
 
   it('resets password when OTP is valid', async () => {
     const email = 'user@example.com';
-    const verification = VerificationToken.create(
-      'verif-id',
-      email,
-      'hashed-otp',
-      'password_reset',
-      600000,
-    );
+    const verification = AuthEntitiesTestFactory.createVerificationToken({
+      id: 'verif-id',
+      identifier: email,
+      type: 'password_reset',
+      expiresInMs: 600000,
+    });
     verificationRepo.findByIdentifierAndType.mockResolvedValue(verification);
     hasher.compare.mockResolvedValue(true);
-    const user = User.create('user-id', email, 'Alice');
-    userRepo.findByEmail.mockResolvedValue(user);
-    const account = Account.createCredentials(
-      'acc-id',
-      'user-id',
+    const user = AuthEntitiesTestFactory.createUser({
+      id: 'user-id',
       email,
-      Password.createFromHash('old-hash'),
-    );
+      name: 'Alice',
+      isEmailVerified: true,
+    });
+    userRepo.findByEmail.mockResolvedValue(user);
+    const account = AuthEntitiesTestFactory.createCredentialsAccount({
+      id: 'acc-id',
+      userId: 'user-id',
+      email,
+      passwordHash: 'old-hash',
+    });
     accountRepo.findByUserId.mockResolvedValue(account);
 
     await useCase.execute({

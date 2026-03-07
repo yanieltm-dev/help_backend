@@ -5,9 +5,9 @@ import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { User } from '../../domain/entities/user.entity';
+import { createResendVerificationUseCaseSut } from './test-utils/sut/create-resend-verification-use-case-sut';
 
 jest.mock('@/shared/utils/uuid', () => ({
   generateUuidV7: jest.fn(() => 'mocked-uuid'),
@@ -17,37 +17,14 @@ describe('ResendVerificationUseCase', () => {
   let useCase: ResendVerificationUseCase;
   let userRepo: jest.Mocked<UserRepository>;
   let verificationRepo: jest.Mocked<VerificationRepository>;
-  let hasher: jest.Mocked<PasswordHasher>;
   let eventBus: jest.Mocked<IEventBus>;
-  let idGenerator: { generate: jest.Mock };
 
   beforeEach(() => {
-    userRepo = {
-      findByEmail: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-    verificationRepo = {
-      countRecentForIdentifierAndTypeSince: jest.fn(),
-      invalidateAllForIdentifier: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<VerificationRepository>;
-    hasher = {
-      hash: jest.fn().mockResolvedValue('hashed_otp'),
-    } as unknown as jest.Mocked<PasswordHasher>;
-    eventBus = {
-      publish: jest.fn(),
-    } as unknown as jest.Mocked<IEventBus>;
-    idGenerator = {
-      generate: jest.fn().mockReturnValue('mocked-uuid'),
-    };
-
-    useCase = new ResendVerificationUseCase(
-      userRepo,
-      verificationRepo,
-      hasher,
-      eventBus,
-      idGenerator,
-      { otpExpiresInMs: 3600000 },
-    );
+    const sut = createResendVerificationUseCaseSut();
+    useCase = sut.useCase;
+    userRepo = sut.userRepo;
+    verificationRepo = sut.verificationRepo;
+    eventBus = sut.eventBus;
   });
 
   it('should publish VerificationResendedDomainEvent when successful', async () => {

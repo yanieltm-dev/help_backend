@@ -1,46 +1,24 @@
 import { RefreshSessionUseCase } from '@/modules/auth/application/use-cases/refresh-session.use-case';
 
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import { Session } from '@/modules/auth/domain/entities/session.entity';
 import { InvalidRefreshTokenError } from '@/modules/auth/domain/errors/invalid-refresh-token.error';
+import { createRefreshSessionUseCaseSut } from './test-utils/sut/create-refresh-session-use-case-sut';
 
 describe('RefreshSessionUseCase', () => {
   let useCase: RefreshSessionUseCase;
   let sessionRepo: jest.Mocked<SessionRepository>;
-  let userRepo: jest.Mocked<UserRepository>;
   let authenticator: jest.Mocked<Authenticator>;
 
   const now = new Date();
 
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(now);
-
-    sessionRepo = {
-      save: jest.fn(),
-      findByToken: jest.fn(),
-      deleteByToken: jest.fn(),
-      deleteByUserId: jest.fn(),
-      deleteByUserIdExceptToken: jest.fn(),
-    } as unknown as jest.Mocked<SessionRepository>;
-
-    userRepo = {
-      findByEmail: jest.fn(),
-      findById: jest.fn(),
-      findByUsername: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-
-    authenticator = {
-      generateTokens: jest.fn(),
-      verifyToken: jest.fn(),
-      verifyRefreshToken: jest.fn(),
-    } as unknown as jest.Mocked<Authenticator>;
-
-    useCase = new RefreshSessionUseCase(sessionRepo, userRepo, authenticator, {
-      sessionExpiresInMs: 3600000,
-    });
+    const sut = createRefreshSessionUseCaseSut();
+    useCase = sut.useCase;
+    sessionRepo = sut.sessionRepo;
+    authenticator = sut.authenticator;
   });
 
   afterEach(() => {

@@ -5,6 +5,7 @@ import type { ProfileRepository } from '../../domain/ports/profile.repository.po
 import { User } from '../../domain/entities/user.entity';
 import { Profile } from '../../domain/entities/profile.entity';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import { AuthUseCaseTestKit } from './test-utils/auth-use-case-test-kit';
 
 describe('GetMeUseCase', () => {
   let useCase: GetMeUseCase;
@@ -12,18 +13,8 @@ describe('GetMeUseCase', () => {
   let profileRepo: jest.Mocked<ProfileRepository>;
 
   beforeEach(() => {
-    userRepo = {
-      findByEmail: jest.fn(),
-      findById: jest.fn(),
-      findByUsername: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-
-    profileRepo = {
-      findByUsername: jest.fn(),
-      findByUserId: jest.fn(),
-      save: jest.fn(),
-    } as unknown as jest.Mocked<ProfileRepository>;
+    userRepo = AuthUseCaseTestKit.createUserRepositoryMock();
+    profileRepo = AuthUseCaseTestKit.createProfileRepositoryMock();
 
     useCase = new GetMeUseCase(userRepo, profileRepo);
   });
