@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
 import { authUseCaseProviders } from './auth-use-cases.providers';
+import { MinAgeRegistrationConstraint } from './infrastructure/http/dto/validators/min-age-registration.validator';
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
 import { PasswordResetRequestedListener } from './infrastructure/listeners/password-reset-requested.listener';
@@ -51,6 +52,7 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
   controllers: [AuthController],
   providers: [
     ...authUseCaseProviders,
+    MinAgeRegistrationConstraint,
     UserRegisteredListener,
     VerificationResendedListener,
     PasswordResetRequestedListener,
