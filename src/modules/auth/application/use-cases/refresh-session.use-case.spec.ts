@@ -5,6 +5,7 @@ import type { Authenticator } from '@/modules/auth/application/ports/authenticat
 import { Session } from '@/modules/auth/domain/entities/session.entity';
 import { InvalidRefreshTokenError } from '@/modules/auth/domain/errors/invalid-refresh-token.error';
 import { createRefreshSessionUseCaseSut } from './test-utils/sut/create-refresh-session-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('RefreshSessionUseCase', () => {
   let useCase: RefreshSessionUseCase;
@@ -34,7 +35,7 @@ describe('RefreshSessionUseCase', () => {
       'session-id',
       userId,
       oldRefreshToken,
-      new Date(now.getTime() + 3600000),
+      new Date(now.getTime() + parseDuration('1h')),
       '127.0.0.1',
       'jest-agent',
     );
@@ -44,7 +45,9 @@ describe('RefreshSessionUseCase', () => {
 
     const newAccessToken = 'new-access-token';
     const newRefreshToken = 'new-refresh-token';
-    const newAccessTokenExpiresAt = new Date(now.getTime() + 900000);
+    const newAccessTokenExpiresAt = new Date(
+      now.getTime() + parseDuration('15m'),
+    );
 
     authenticator.generateTokens.mockResolvedValue({
       accessToken: newAccessToken,
@@ -115,7 +118,7 @@ describe('RefreshSessionUseCase', () => {
       'session-id',
       'user-id',
       refreshToken,
-      new Date(now.getTime() + 3600000),
+      new Date(now.getTime() + parseDuration('1h')),
     );
 
     sessionRepo.findByToken.mockResolvedValue(session);

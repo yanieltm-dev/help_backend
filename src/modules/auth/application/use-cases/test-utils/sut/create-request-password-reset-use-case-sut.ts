@@ -1,4 +1,5 @@
 import { RequestPasswordResetUseCase } from '@/modules/auth/application/use-cases/request-password-reset.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
 import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
@@ -56,7 +57,11 @@ export function createRequestPasswordResetUseCaseSut(
       resolvedHasher,
       resolvedEventBus,
       resolvedIdGenerator,
-      { otpExpiresInMs: 600000, maxRequests: 5, windowMs: 900000 },
+      {
+        otpExpiresInMs: parseDuration('10m'),
+        maxRequests: 5,
+        windowMs: parseDuration('15m'),
+      },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,

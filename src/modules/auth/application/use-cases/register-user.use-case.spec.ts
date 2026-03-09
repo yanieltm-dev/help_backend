@@ -2,6 +2,7 @@ import { RegisterUserUseCase } from './register-user.use-case';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
 import { createRegisterUserUseCaseSut } from './test-utils/sut/create-register-user-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('RegisterUserUseCase', () => {
   let useCase: RegisterUserUseCase;
@@ -34,7 +35,7 @@ describe('RegisterUserUseCase', () => {
 
     expect(event.email).toBe('user@example.com');
     expect(event.name).toBe('Alice');
-    expect(event.otpExpiresInMs).toBe(600000);
+    expect(event.otpExpiresInMs).toBe(parseDuration('10m'));
     expect(event.verificationToken).toMatch(/^\d{6}$/);
   });
 });

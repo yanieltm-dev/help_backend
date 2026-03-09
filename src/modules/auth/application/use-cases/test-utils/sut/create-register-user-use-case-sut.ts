@@ -1,4 +1,5 @@
 import { RegisterUserUseCase } from '@/modules/auth/application/use-cases/register-user.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
 import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
@@ -76,7 +77,7 @@ export function createRegisterUserUseCaseSut(
       resolvedUow,
       resolvedIdGenerator,
       resolvedEventBus,
-      { otpExpiresInMs: 600000 },
+      { otpExpiresInMs: parseDuration('10m') },
     ),
     eventBus: resolvedEventBus,
   };

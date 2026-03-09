@@ -8,6 +8,7 @@ import type { VerificationRepository } from '../../domain/ports/verification.rep
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { User } from '../../domain/entities/user.entity';
 import { createResendVerificationUseCaseSut } from './test-utils/sut/create-resend-verification-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 jest.mock('@/shared/utils/uuid', () => ({
   generateUuidV7: jest.fn(() => 'mocked-uuid'),
@@ -52,7 +53,7 @@ describe('ResendVerificationUseCase', () => {
     expect(event.email).toBe(emailStr);
     expect(event.verificationToken).toMatch(/^\d{6}$/);
     expect(event.name).toBe('Test User');
-    expect(event.otpExpiresInMs).toBe(3600000);
+    expect(event.otpExpiresInMs).toBe(parseDuration('1h'));
   });
 
   it('should throw BadRequestException if user not found', async () => {

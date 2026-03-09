@@ -9,6 +9,7 @@ import type { ProfileRepository } from '../../domain/ports/profile.repository.po
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
 import { createVerifyEmailUseCaseSut } from './test-utils/sut/create-verify-email-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('VerifyEmailUseCase', () => {
   let useCase: VerifyEmailUseCase;
@@ -45,7 +46,7 @@ describe('VerifyEmailUseCase', () => {
       id: 'verification-id',
       identifier: email,
       type: 'email_verification',
-      expiresInMs: 3600000,
+      expiresInMs: parseDuration('1h'),
     });
     const profile = AuthEntitiesTestFactory.createProfile({
       id: 'profile-id',

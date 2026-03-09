@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { IsString, IsOptional } from 'class-validator';
 import { validateConfig } from './validate-config';
+import { parseDuration } from '../../shared/utils/parse-duration';
 
 export type AuthConfig = {
   jwtSecret: string;
@@ -39,15 +40,15 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  AUTH_LOCKOUT_DURATION_MS?: string;
+  AUTH_LOCKOUT_DURATION?: string;
 
   @IsString()
   @IsOptional()
-  AUTH_OTP_EXPIRES_IN_MS?: string;
+  AUTH_OTP_EXPIRES_IN?: string;
 
   @IsString()
   @IsOptional()
-  AUTH_SESSION_EXPIRES_IN_MS?: string;
+  AUTH_SESSION_EXPIRES_IN?: string;
 
   @IsString()
   @IsOptional()
@@ -55,7 +56,7 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  AUTH_RESEND_VERIFICATION_WINDOW_MS?: string;
+  AUTH_RESEND_VERIFICATION_WINDOW?: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -70,25 +71,19 @@ export default registerAs<AuthConfig>('auth', () => {
       process.env.AUTH_MAX_FAILED_ATTEMPTS || '5',
       10,
     ),
-    lockoutDurationMs: parseInt(
-      process.env.AUTH_LOCKOUT_DURATION_MS || '900000',
-      10,
+    lockoutDurationMs: parseDuration(
+      process.env.AUTH_LOCKOUT_DURATION || '15m',
     ),
-    otpExpiresInMs: parseInt(
-      process.env.AUTH_OTP_EXPIRES_IN_MS || '600000',
-      10,
-    ),
-    sessionExpiresInMs: parseInt(
-      process.env.AUTH_SESSION_EXPIRES_IN_MS || '604800000',
-      10,
+    otpExpiresInMs: parseDuration(process.env.AUTH_OTP_EXPIRES_IN || '10m'),
+    sessionExpiresInMs: parseDuration(
+      process.env.AUTH_SESSION_EXPIRES_IN || '1h',
     ),
     resendVerificationMaxRequests: parseInt(
       process.env.AUTH_RESEND_VERIFICATION_MAX_REQUESTS || '3',
       10,
     ),
-    resendVerificationWindowMs: parseInt(
-      process.env.AUTH_RESEND_VERIFICATION_WINDOW_MS || '3600000',
-      10,
+    resendVerificationWindowMs: parseDuration(
+      process.env.AUTH_RESEND_VERIFICATION_WINDOW || '1h',
     ),
     cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
   };

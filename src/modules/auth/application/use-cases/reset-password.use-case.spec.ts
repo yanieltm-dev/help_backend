@@ -12,6 +12,7 @@ import {
 } from '../../domain/errors/otp.errors';
 import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
 import { createResetPasswordUseCaseSut } from './test-utils/sut/create-reset-password-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('ResetPasswordUseCase', () => {
   let useCase: ResetPasswordUseCase;
@@ -37,7 +38,7 @@ describe('ResetPasswordUseCase', () => {
       id: 'verif-id',
       identifier: email,
       type: 'password_reset',
-      expiresInMs: 600000,
+      expiresInMs: parseDuration('10m'),
     });
     verificationRepo.findByIdentifierAndType.mockResolvedValue(verification);
     hasher.compare.mockResolvedValue(true);

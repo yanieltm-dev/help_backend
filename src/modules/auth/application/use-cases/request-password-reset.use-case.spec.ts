@@ -5,6 +5,7 @@ import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { User } from '../../domain/entities/user.entity';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
 import { createRequestPasswordResetUseCaseSut } from './test-utils/sut/create-request-password-reset-use-case-sut';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('RequestPasswordResetUseCase', () => {
   let useCase: RequestPasswordResetUseCase;
@@ -45,7 +46,7 @@ describe('RequestPasswordResetUseCase', () => {
     expect(event.email).toBe(email);
     expect(event.name).toBe('Alice');
     expect(event.otp).toMatch(/^\d{6}$/);
-    expect(event.otpExpiresInMs).toBe(600000);
+    expect(event.otpExpiresInMs).toBe(parseDuration('10m'));
   });
 
   it('does nothing (but does not throw) when user does not exist', async () => {

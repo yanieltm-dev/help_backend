@@ -1,4 +1,5 @@
 import { RefreshSessionUseCase } from '@/modules/auth/application/use-cases/refresh-session.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
@@ -40,7 +41,7 @@ export function createRefreshSessionUseCaseSut(
       resolvedUserRepo,
       resolvedAuthenticator,
       {
-        sessionExpiresInMs: 3600000,
+        sessionExpiresInMs: parseDuration('1h'),
       },
     ),
     sessionRepo: resolvedSessionRepo,

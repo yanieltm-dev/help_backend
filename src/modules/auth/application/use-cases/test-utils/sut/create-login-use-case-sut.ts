@@ -1,4 +1,5 @@
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
@@ -74,8 +75,8 @@ export function createLoginUseCaseSut(
       resolvedIdGenerator,
       {
         maxFailedAttempts: 5,
-        lockoutDurationMs: 900000,
-        sessionExpiresInMs: 3600000,
+        lockoutDurationMs: parseDuration('15m'),
+        sessionExpiresInMs: parseDuration('1h'),
       },
     ),
     userRepo: resolvedUserRepo,

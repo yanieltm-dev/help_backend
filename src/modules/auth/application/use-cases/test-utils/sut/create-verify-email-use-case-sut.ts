@@ -1,4 +1,5 @@
 import { VerifyEmailUseCase } from '@/modules/auth/application/use-cases/verify-email.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
@@ -78,7 +79,7 @@ export function createVerifyEmailUseCaseSut(
       resolvedSessionRepo,
       resolvedProfileRepo,
       resolvedIdGenerator,
-      { sessionExpiresInMs: 3600000 },
+      { sessionExpiresInMs: parseDuration('1h') },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,

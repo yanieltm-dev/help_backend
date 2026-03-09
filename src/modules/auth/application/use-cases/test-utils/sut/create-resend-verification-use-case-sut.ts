@@ -1,4 +1,5 @@
 import { ResendVerificationUseCase } from '@/modules/auth/application/use-cases/resend-verification.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
 import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
@@ -57,7 +58,11 @@ export function createResendVerificationUseCaseSut(
       resolvedHasher,
       resolvedEventBus,
       resolvedIdGenerator,
-      { otpExpiresInMs: 3600000, maxRequests: 3, windowMs: 3600000 },
+      {
+        otpExpiresInMs: parseDuration('1h'),
+        maxRequests: 3,
+        windowMs: parseDuration('1h'),
+      },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,
