@@ -110,7 +110,8 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    it('Scenario 4: User too young (under 13)', () => {
+    it('Scenario 4: User too young (under 13)', async () => {
+      if (!dbAvailable) return;
       const youngUser = {
         ...validUser,
         username: `young_${timestamp}`,
@@ -125,8 +126,13 @@ describe('AuthController (e2e)', () => {
         .expect((res) => {
           const body = res.body as ApiResponse;
           expect(body.message).toBe('Validation failed');
-          expect(body.errors?.birthDate).toContain(
-            'You must be at least 13 years old to register',
+          const birthDateErrors = body.errors?.birthDate;
+          expect(birthDateErrors).toEqual(
+            expect.arrayContaining([
+              expect.stringMatching(
+                /You must be at least \d+ years old to register/,
+              ),
+            ]),
           );
         });
     });

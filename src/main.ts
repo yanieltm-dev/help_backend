@@ -9,6 +9,7 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import { useContainer } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from './core/config/config.type';
 import { Logger } from 'pino-nestjs';
@@ -25,6 +26,8 @@ async function bootstrap() {
   app.useLogger(logger);
 
   const configService = app.get(ConfigService<AllConfigType>);
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.setGlobalPrefix(
     configService.getOrThrow('app.apiPrefix', { infer: true }),

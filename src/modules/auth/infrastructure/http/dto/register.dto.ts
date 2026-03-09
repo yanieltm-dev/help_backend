@@ -8,7 +8,7 @@ import {
   Matches,
   IsISO8601,
 } from 'class-validator';
-import { IsAtLeast13YearsOld } from './validators/is-adult.validator';
+import { MinAgeRegistration } from './validators/min-age-registration.validator';
 
 export class RegisterDto {
   @ApiProperty({ example: 'John Doe' })
@@ -31,7 +31,7 @@ export class RegisterDto {
 
   @ApiProperty({ example: '1990-01-01' })
   @IsISO8601()
-  @IsAtLeast13YearsOld()
+  @MinAgeRegistration()
   @IsNotEmpty()
   birthDate: string;
 

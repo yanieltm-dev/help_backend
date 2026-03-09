@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import { useContainer } from 'class-validator';
 import {
   HttpStatus,
   INestApplication,
@@ -95,6 +96,8 @@ export async function bootstrapE2eApp(
   ).compile();
 
   const app: INestApplication = moduleFixture.createNestApplication();
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   const configService = app.get(ConfigService<AllConfigType>);
   const apiPrefix = configService.getOrThrow('app.apiPrefix', {
     infer: true,

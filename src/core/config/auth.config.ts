@@ -15,6 +15,7 @@ export type AuthConfig = {
   sessionExpiresInMs: number;
   resendVerificationMaxRequests: number;
   resendVerificationWindowMs: number;
+  minAgeRegister: number;
 };
 
 class EnvironmentVariables {
@@ -57,6 +58,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   AUTH_RESEND_VERIFICATION_WINDOW?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_MIN_AGE_REGISTER?: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -86,5 +91,6 @@ export default registerAs<AuthConfig>('auth', () => {
       process.env.AUTH_RESEND_VERIFICATION_WINDOW || '1h',
     ),
     cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
+    minAgeRegister: parseInt(process.env.AUTH_MIN_AGE_REGISTER || '13', 10),
   };
 });
