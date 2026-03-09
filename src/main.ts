@@ -33,6 +33,14 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'assets'), { prefix: '/assets' });
 
   app.use(helmet());
+
+  app.enableCors({
+    origin: configService.getOrThrow('app.allowedOrigins', { infer: true }),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  });
+
   app.use(
     cookieParser(
       configService.getOrThrow('auth.cookieSecret', { infer: true }),
