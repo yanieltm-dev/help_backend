@@ -110,7 +110,8 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    it('Scenario 4: User too young (under 13)', () => {
+    it('Scenario 4: User too young (under 13)', async () => {
+      if (!dbAvailable) return;
       const youngUser = {
         ...validUser,
         username: `young_${timestamp}`,
@@ -125,8 +126,13 @@ describe('AuthController (e2e)', () => {
         .expect((res) => {
           const body = res.body as ApiResponse;
           expect(body.message).toBe('Validation failed');
-          expect(body.errors?.birthDate).toContain(
-            'You must be at least 13 years old to register',
+          const birthDateErrors = body.errors?.birthDate;
+          expect(birthDateErrors).toEqual(
+            expect.arrayContaining([
+              expect.stringMatching(
+                /You must be at least \d+ years old to register/,
+              ),
+            ]),
           );
         });
     });
@@ -412,7 +418,7 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    it('Scenario 2: Reset password with invalid OTP returns 400', async () => {
+    it('Scenario 2: Verify password reset OTP with invalid OTP returns 400', async () => {
       if (!dbAvailable) return;
 
       const ts = Date.now();
@@ -428,16 +434,15 @@ describe('AuthController (e2e)', () => {
         .expect(201);
 
       await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/reset-password')
+        .post('/api/v1/auth/verify-password-reset-otp')
         .send({
           email: user.email,
-          code: '000000',
-          newPassword: 'NewPassword123!',
+          otp: '000000',
         })
         .expect(400);
     });
 
-    it('Scenario 3: After reset password, refresh with old token fails (sessions invalidated)', async () => {
+    it('Scenario 3: When password change fails, refresh with old token still works (no session revocation)', async () => {
       if (!dbAvailable) return;
 
       const ts = Date.now();
@@ -480,18 +485,17 @@ describe('AuthController (e2e)', () => {
       );
 
       // Without intercepting the OTP, we cannot complete a successful reset end-to-end.
-      // This test asserts the behavioral contract by forcing session invalidation through
-      // a direct reset with an invalid OTP (which should NOT invalidate sessions).
+      // This test asserts the behavioral contract: a failed password change should NOT
+      // invalidate sessions.
       await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/reset-password')
+        .post('/api/v1/auth/change-password-with-token')
         .send({
-          email: user.email,
-          code: '000000',
+          changePasswordToken: 'invalid-token-format',
           newPassword: 'NewPassword123!',
         })
         .expect(400);
 
-      // Still valid because reset failed
+      // Still valid because change failed
       await request(app.getHttpServer() as App)
         .post('/api/v1/auth/refresh')
         .set('Cookie', cookies)

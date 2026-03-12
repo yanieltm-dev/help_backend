@@ -14,6 +14,10 @@ import { EmailAlreadyVerifiedError } from '../../../domain/errors/email-already-
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { InvalidCurrentPasswordError } from '../../../domain/errors/invalid-current-password.error';
 import { InvalidNewPasswordError } from '../../../domain/errors/invalid-new-password.error';
+import {
+  ExpiredChangePasswordTokenError,
+  InvalidChangePasswordTokenError,
+} from '../../../domain/errors/change-password-token.errors';
 
 export function registerAuthDomainErrors() {
   DomainErrorMapperRegistry.register(UserAlreadyExistsError, {
@@ -32,6 +36,16 @@ export function registerAuthDomainErrors() {
   });
 
   DomainErrorMapperRegistry.register(MaxAttemptsExceededError, {
+    status: HttpStatus.BAD_REQUEST,
+    error: 'Bad Request',
+  });
+
+  DomainErrorMapperRegistry.register(InvalidChangePasswordTokenError, {
+    status: HttpStatus.BAD_REQUEST,
+    error: 'Bad Request',
+  });
+
+  DomainErrorMapperRegistry.register(ExpiredChangePasswordTokenError, {
     status: HttpStatus.BAD_REQUEST,
     error: 'Bad Request',
   });

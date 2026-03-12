@@ -16,7 +16,8 @@ import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
-import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
+import { VerifyPasswordResetOtpUseCase } from './application/use-cases/verify-password-reset-otp.use-case';
+import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token.use-case';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { ConfigService } from '@nestjs/config';
@@ -114,7 +115,34 @@ export const authUseCaseProviders: Provider[] = [
     },
   },
   {
-    provide: ResetPasswordUseCase,
+    provide: VerifyPasswordResetOtpUseCase,
+    inject: [
+      VERIFICATION_REPOSITORY,
+      PASSWORD_HASHER,
+      ID_GENERATOR,
+      ConfigService,
+    ],
+    useFactory: (
+      verificationRepo: VerificationRepository,
+      hasher: PasswordHasher,
+      idGenerator: IIdGenerator,
+      configService: ConfigService<AllConfigType>,
+    ) => {
+      return new VerifyPasswordResetOtpUseCase(
+        verificationRepo,
+        hasher,
+        idGenerator,
+        {
+          changePasswordTokenExpiresInMs: configService.getOrThrow(
+            'auth.changePasswordTokenExpiresInMs',
+            { infer: true },
+          ),
+        },
+      );
+    },
+  },
+  {
+    provide: ChangePasswordWithTokenUseCase,
     inject: [
       VERIFICATION_REPOSITORY,
       USER_REPOSITORY,
@@ -131,7 +159,7 @@ export const authUseCaseProviders: Provider[] = [
       hasher: PasswordHasher,
       uow: IUnitOfWork,
     ) => {
-      return new ResetPasswordUseCase(
+      return new ChangePasswordWithTokenUseCase(
         verificationRepo,
         userRepo,
         accountRepo,

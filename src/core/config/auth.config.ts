@@ -12,6 +12,7 @@ export type AuthConfig = {
   maxFailedAttempts: number;
   lockoutDurationMs: number;
   otpExpiresInMs: number;
+  changePasswordTokenExpiresInMs: number;
   sessionExpiresInMs: number;
   resendVerificationMaxRequests: number;
   resendVerificationWindowMs: number;
@@ -49,6 +50,10 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  AUTH_CHANGE_PASSWORD_TOKEN_EXPIRES_IN?: string;
+
+  @IsString()
+  @IsOptional()
   AUTH_SESSION_EXPIRES_IN?: string;
 
   @IsString()
@@ -80,6 +85,9 @@ export default registerAs<AuthConfig>('auth', () => {
       process.env.AUTH_LOCKOUT_DURATION || '15m',
     ),
     otpExpiresInMs: parseDuration(process.env.AUTH_OTP_EXPIRES_IN || '10m'),
+    changePasswordTokenExpiresInMs: parseDuration(
+      process.env.AUTH_CHANGE_PASSWORD_TOKEN_EXPIRES_IN || '15m',
+    ),
     sessionExpiresInMs: parseDuration(
       process.env.AUTH_SESSION_EXPIRES_IN || '1h',
     ),

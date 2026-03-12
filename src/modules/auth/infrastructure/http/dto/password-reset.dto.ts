@@ -14,7 +14,7 @@ export class RequestPasswordResetDto {
   email: string;
 }
 
-export class ResetPasswordDto {
+export class VerifyPasswordResetOtpDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;
@@ -23,7 +23,14 @@ export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty()
   @Length(6, 6)
-  code: string;
+  otp: string;
+}
+
+export class ChangePasswordWithTokenDto {
+  @ApiProperty({ example: 'change-token-id.change-token-secret' })
+  @IsString()
+  @IsNotEmpty()
+  changePasswordToken: string;
 
   @ApiProperty({ example: 'NewPassword123' })
   @IsString()

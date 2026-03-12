@@ -29,6 +29,7 @@ export const AuthUseCaseTestKit: AuthUseCaseTestKitType = {
     ({
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByIdAndType: jest.fn(),
       findByUsername: jest.fn(),
       save: jest.fn(),
     }) as unknown as jest.Mocked<UserRepository>,

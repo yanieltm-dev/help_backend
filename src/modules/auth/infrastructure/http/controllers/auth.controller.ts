@@ -21,7 +21,8 @@ import { LoginUseCase } from '../../../application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
 import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
-import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password.use-case';
+import { VerifyPasswordResetOtpUseCase } from '../../../application/use-cases/verify-password-reset-otp.use-case';
+import { ChangePasswordWithTokenUseCase } from '../../../application/use-cases/change-password-with-token.use-case';
 import { GetMeUseCase } from '../../../application/use-cases/get-me.use-case';
 import { ChangePasswordUseCase } from '../../../application/use-cases/change-password.use-case';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
@@ -30,7 +31,8 @@ import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
 import { LoginDto } from '../dto/login.dto';
 import {
   RequestPasswordResetDto,
-  ResetPasswordDto,
+  VerifyPasswordResetOtpDto,
+  ChangePasswordWithTokenDto,
 } from '../dto/password-reset.dto';
 import {
   ApiBearerAuth,
@@ -71,7 +73,8 @@ export class AuthController {
     private readonly refreshSessionUseCase: RefreshSessionUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
+    private readonly changePasswordWithTokenUseCase: ChangePasswordWithTokenUseCase,
     private readonly getMeUseCase: GetMeUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly configService: ConfigService<AllConfigType>,
@@ -166,19 +169,36 @@ export class AuthController {
     };
   }
 
-  @Post('reset-password')
+  @Post('verify-password-reset-otp')
   @Version('1')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password with OTP' })
-  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiOperation({ summary: 'Verify password reset OTP and get change token' })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP verified, returns changePasswordToken',
+  })
   @ApiResponse({
     status: 400,
     description: 'Invalid, expired, or max attempts exceeded for OTP',
   })
   @ApiResponse({ status: 422, description: 'Validation failed' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.resetPasswordUseCase.execute(dto);
-    return { message: 'Password reset successfully' };
+  async verifyPasswordResetOtp(@Body() dto: VerifyPasswordResetOtpDto) {
+    return this.verifyPasswordResetOtpUseCase.execute(dto);
+  }
+
+  @Post('change-password-with-token')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change password with changePasswordToken' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired change password token',
+  })
+  @ApiResponse({ status: 422, description: 'Validation failed' })
+  async changePasswordWithToken(@Body() dto: ChangePasswordWithTokenDto) {
+    await this.changePasswordWithTokenUseCase.execute(dto);
+    return { message: 'Password changed successfully' };
   }
 
   @Post('login')

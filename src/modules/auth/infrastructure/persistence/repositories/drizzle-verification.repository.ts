@@ -3,7 +3,10 @@ import { DATABASE_CONNECTION } from '@/core/database/database.module';
 import * as schema from '@/core/database/schema';
 import type { DrizzleDatabase } from '@/core/database/connection';
 import { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
-import { VerificationToken } from '@/modules/auth/domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '@/modules/auth/domain/entities/verification-token.entity';
 import { and, eq, gte, sql } from 'drizzle-orm';
 
 @Injectable()
@@ -49,7 +52,30 @@ export class DrizzleVerificationRepository implements VerificationRepository {
       row.id,
       row.identifier,
       row.value,
-      row.type as 'email_verification' | 'password_reset',
+      row.type as VerificationTokenType,
+      0, // not used for reconstruction
+      row.attempts,
+    ).withFixedExpiration(row.expiresAt, row.createdAt);
+  }
+
+  async findByIdAndType(
+    id: string,
+    type: string,
+  ): Promise<VerificationToken | null> {
+    const row = await this.db.query.verification.findFirst({
+      where: and(
+        eq(schema.verification.id, id),
+        eq(schema.verification.type, type),
+      ),
+    });
+
+    if (!row) return null;
+
+    return VerificationToken.create(
+      row.id,
+      row.identifier,
+      row.value,
+      row.type as VerificationTokenType,
       0, // not used for reconstruction
       row.attempts,
     ).withFixedExpiration(row.expiresAt, row.createdAt);

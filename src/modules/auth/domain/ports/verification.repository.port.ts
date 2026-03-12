@@ -14,6 +14,8 @@ export interface VerificationRepository {
     type: string,
   ): Promise<VerificationToken | null>;
 
+  findByIdAndType(id: string, type: string): Promise<VerificationToken | null>;
+
   delete(id: string): Promise<void>;
 
   invalidateAllForIdentifier(identifier: string, type: string): Promise<void>;
