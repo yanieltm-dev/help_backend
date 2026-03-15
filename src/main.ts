@@ -106,6 +106,6 @@ async function bootstrap() {
   });
 
   const port = configService.getOrThrow('app.port', { infer: true });
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 }
 void bootstrap();
