@@ -1,3 +1,16 @@
+import { AllConfigType } from '@/core/config/config.type';
+import { ChangePasswordWithTokenUseCase } from '@/modules/auth/application/use-cases/change-password-with-token.use-case';
+import { ChangePasswordUseCase } from '@/modules/auth/application/use-cases/change-password.use-case';
+import { GetMeUseCase } from '@/modules/auth/application/use-cases/get-me.use-case';
+import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
+import { LogoutUseCase } from '@/modules/auth/application/use-cases/logout.use-case';
+import { RefreshSessionUseCase } from '@/modules/auth/application/use-cases/refresh-session.use-case';
+import { RegisterUserUseCase } from '@/modules/auth/application/use-cases/register-user.use-case';
+import { RequestPasswordResetUseCase } from '@/modules/auth/application/use-cases/request-password-reset.use-case';
+import { ResendVerificationUseCase } from '@/modules/auth/application/use-cases/resend-verification.use-case';
+import { VerifyEmailUseCase } from '@/modules/auth/application/use-cases/verify-email.use-case';
+import { VerifyPasswordResetOtpUseCase } from '@/modules/auth/application/use-cases/verify-password-reset-otp.use-case';
+import { InvalidRefreshTokenError } from '@/modules/auth/domain/errors/invalid-refresh-token.error';
 import {
   Body,
   Controller,
@@ -11,42 +24,32 @@ import {
   UseGuards,
   Version,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
-import { RegisterUserUseCase } from '../../../application/use-cases/register-user.use-case';
-import { VerifyEmailUseCase } from '../../../application/use-cases/verify-email.use-case';
-import { ResendVerificationUseCase } from '../../../application/use-cases/resend-verification.use-case';
-import { LoginUseCase } from '../../../application/use-cases/login.use-case';
-import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-session.use-case';
-import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
-import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
-import { VerifyPasswordResetOtpUseCase } from '../../../application/use-cases/verify-password-reset-otp.use-case';
-import { ChangePasswordWithTokenUseCase } from '../../../application/use-cases/change-password-with-token.use-case';
-import { GetMeUseCase } from '../../../application/use-cases/get-me.use-case';
-import { ChangePasswordUseCase } from '../../../application/use-cases/change-password.use-case';
-import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
-import { RegisterDto } from '../dto/register.dto';
-import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
-import { LoginDto } from '../dto/login.dto';
-import {
-  RequestPasswordResetDto,
-  VerifyPasswordResetOtpDto,
-  ChangePasswordWithTokenDto,
-} from '../dto/password-reset.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RegisterResponseDto } from '../responses/register.response';
-import { LoginResponseDto } from '../responses/login.response';
-import { MeResponseDto } from '../responses/me.response';
+import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../security/guards/jwt-auth.guard';
-import { CurrentAuth } from '../decorators/current-auth.decorator';
 import type { AuthenticatedRequestUser } from '../../security/jwt.strategy';
-import { ChangePasswordDto } from '../dto/change-password.dto';
+import { CurrentAuth } from '../decorators/current-auth.decorator';
+import { ChangePasswordDto } from '../dto/requests/change-password.dto';
+import { LoginDto } from '../dto/requests/login.dto';
+import {
+  ChangePasswordWithTokenDto,
+  RequestPasswordResetDto,
+  VerifyPasswordResetOtpDto,
+} from '../dto/requests/password-reset.dto';
+import { RegisterDto } from '../dto/requests/register.dto';
+import {
+  ResendVerificationDto,
+  VerifyEmailDto,
+} from '../dto/requests/verification.dto';
+import { LoginResponseDto } from '../dto/responses/login.response.dto';
+import { MeResponseDto } from '../dto/responses/me.response.dto';
+import { RegisterResponseDto } from '../dto/responses/register.response.dto';
 
 function getCookie(req: Request, name: string): string | undefined {
   const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })

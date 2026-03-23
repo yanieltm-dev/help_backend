@@ -1,38 +1,37 @@
-import { Provider } from '@nestjs/common';
-import type { UserRepository } from './domain/ports/user.repository.port';
-import type { AccountRepository } from './domain/ports/account.repository.port';
-import type { ProfileRepository } from './domain/ports/profile.repository.port';
-import type { VerificationRepository } from './domain/ports/verification.repository.port';
-import type { SessionRepository } from './domain/ports/session.repository.port';
-import type { PasswordHasher } from './application/ports/password-hasher.port';
-import type { Authenticator } from './application/ports/authenticator.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
-import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
-import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
-import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
-import { LoginUseCase } from './application/use-cases/login.use-case';
-import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
-import { LogoutUseCase } from './application/use-cases/logout.use-case';
-import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
-import { VerifyPasswordResetOtpUseCase } from './application/use-cases/verify-password-reset-otp.use-case';
-import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token.use-case';
-import { GetMeUseCase } from './application/use-cases/get-me.use-case';
-import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
-import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { IEventBus } from '@/shared/domain/ports/event-bus.port';
+import { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
+import { EVENT_BUS, ID_GENERATOR, UNIT_OF_WORK } from '@/shared/shared.tokens';
+import { Provider } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Authenticator } from './application/ports/authenticator.port';
+import type { PasswordHasher } from './application/ports/password-hasher.port';
+import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token.use-case';
+import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
+import { GetMeUseCase } from './application/use-cases/get-me.use-case';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { LogoutUseCase } from './application/use-cases/logout.use-case';
+import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
+import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
+import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
+import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
+import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+import { VerifyPasswordResetOtpUseCase } from './application/use-cases/verify-password-reset-otp.use-case';
 import {
   ACCOUNT_REPOSITORY,
-  EVENT_BUS,
+  AUTHENTICATOR,
   PASSWORD_HASHER,
   PROFILE_REPOSITORY,
   SESSION_REPOSITORY,
-  AUTHENTICATOR,
   USER_REPOSITORY,
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
-import { UNIT_OF_WORK, ID_GENERATOR } from '@/shared/shared.tokens';
+import { AccountRepository } from './domain/ports/account.repository.port';
+import { ProfileRepository } from './domain/ports/profile.repository.port';
+import { SessionRepository } from './domain/ports/session.repository.port';
+import { UserRepository } from './domain/ports/user.repository.port';
+import { VerificationRepository } from './domain/ports/verification.repository.port';
 
 export const authUseCaseProviders: Provider[] = [
   {

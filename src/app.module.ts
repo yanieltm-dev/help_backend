@@ -1,23 +1,26 @@
 import { Module } from '@nestjs/common';
-import { HealthModule } from './modules/health/health.module';
 import { ConfigModule } from '@nestjs/config';
-import appConfig from './core/config/app.config';
-import databaseConfig from './core/config/database.config';
-import { LoggerModule } from 'pino-nestjs';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { AppExceptionFilter } from './core/filters/app-exception.filter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { DatabaseModule } from './core/database/database.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { MailModule } from './shared/mail/mail.module';
+import { LoggerModule } from 'pino-nestjs';
+import appConfig from './core/config/app.config';
 import authConfig from './core/config/auth.config';
+import databaseConfig from './core/config/database.config';
 import mailConfig from './core/config/mail.config';
+import mediaConfig from './core/config/media.config';
+import { DatabaseModule } from './core/database/database.module';
+import { AppExceptionFilter } from './core/filters/app-exception.filter';
+import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
+import { MediaModule } from './modules/media/media.module';
+import { MailModule } from './shared/mail/mail.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, databaseConfig, authConfig, mailConfig],
+      load: [appConfig, databaseConfig, authConfig, mailConfig, mediaConfig],
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
       cache: true,
@@ -43,7 +46,9 @@ import mailConfig from './core/config/mail.config';
     HealthModule,
     DatabaseModule,
     AuthModule,
+    MediaModule,
     MailModule,
+    SharedModule,
   ],
   providers: [
     ...(process.env.NODE_ENV !== 'production'

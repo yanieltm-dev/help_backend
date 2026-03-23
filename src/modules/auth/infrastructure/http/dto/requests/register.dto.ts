@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
+  IsISO8601,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
-  Matches,
-  IsISO8601,
 } from 'class-validator';
-import { MinAgeRegistration } from './validators/min-age-registration.validator';
+import { MinAgeRegistration } from '../../validators/min-age-registration.validator';
 
 export class RegisterDto {
   @ApiProperty({ example: 'John Doe' })
