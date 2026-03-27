@@ -1,7 +1,10 @@
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import {
   ExpiredOtpError,
   InvalidOtpError,
@@ -10,6 +13,7 @@ import {
 
 export type VerifyPasswordResetOtpUseCaseConfig = {
   changePasswordTokenExpiresInMs: number;
+  otpMaxAttempts: number;
 };
 
 export interface VerifyPasswordResetOtpCommand {
@@ -22,8 +26,6 @@ export type VerifyPasswordResetOtpResult = {
 };
 
 export class VerifyPasswordResetOtpUseCase {
-  private readonly MAX_ATTEMPTS = 5;
-
   constructor(
     private readonly verificationRepo: VerificationRepository,
     private readonly hasher: PasswordHasher,
@@ -38,7 +40,7 @@ export class VerifyPasswordResetOtpUseCase {
 
     const verification = await this.verificationRepo.findByIdentifierAndType(
       email,
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
     );
 
     if (!verification) {
@@ -49,7 +51,7 @@ export class VerifyPasswordResetOtpUseCase {
       throw new ExpiredOtpError();
     }
 
-    if (verification.hasExceededMaxAttempts(this.MAX_ATTEMPTS)) {
+    if (verification.hasExceededMaxAttempts(this.config.otpMaxAttempts)) {
       throw new MaxAttemptsExceededError();
     }
 
@@ -71,7 +73,7 @@ export class VerifyPasswordResetOtpUseCase {
       tokenId,
       email,
       hashedSecret,
-      'password_change',
+      VerificationTokenType.PASSWORD_CHANGE,
       this.config.changePasswordTokenExpiresInMs,
     );
 

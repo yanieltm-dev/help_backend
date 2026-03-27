@@ -8,7 +8,10 @@ import type { VerificationRepository } from '../../domain/ports/verification.rep
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
@@ -44,7 +47,7 @@ export class ResendVerificationUseCase {
     const recentCount =
       await this.verificationRepo.countRecentForIdentifierAndTypeSince(
         email,
-        'email_verification',
+        VerificationTokenType.EMAIL_VERIFICATION,
         windowStart,
       );
 
@@ -54,7 +57,7 @@ export class ResendVerificationUseCase {
 
     await this.verificationRepo.invalidateAllForIdentifier(
       email,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
     );
 
     const otp = Otp.generate().value;
@@ -64,7 +67,7 @@ export class ResendVerificationUseCase {
       this.idGenerator.generate(),
       email,
       hashedOtp,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
       this.config.otpExpiresInMs,
     );
 

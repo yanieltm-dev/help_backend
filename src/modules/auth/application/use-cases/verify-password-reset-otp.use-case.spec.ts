@@ -2,7 +2,10 @@ import { parseDuration } from '@/shared/utils/parse-duration';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import {
   ExpiredOtpError,
   InvalidOtpError,
@@ -31,7 +34,7 @@ describe('VerifyPasswordResetOtpUseCase', () => {
       'otp-verification-id',
       email,
       'hashed-otp',
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
       new Date(Date.now() + parseDuration('10m')),
       0,
     );
@@ -56,7 +59,7 @@ describe('VerifyPasswordResetOtpUseCase', () => {
         id: 'change-token-id',
         identifier: email,
         token: 'hashed-secret',
-        type: 'password_change',
+        type: VerificationTokenType.PASSWORD_CHANGE,
       }),
     );
   });
@@ -75,7 +78,7 @@ describe('VerifyPasswordResetOtpUseCase', () => {
       'otp-verification-id',
       email,
       'hashed-otp',
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
       new Date(Date.now() - 1000),
       0,
     );
@@ -92,7 +95,7 @@ describe('VerifyPasswordResetOtpUseCase', () => {
       'otp-verification-id',
       email,
       'hashed-otp',
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
       new Date(Date.now() + 10000),
       5,
     );
@@ -109,7 +112,7 @@ describe('VerifyPasswordResetOtpUseCase', () => {
       'otp-verification-id',
       email,
       'hashed-otp',
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
       new Date(Date.now() + 10000),
       0,
     );

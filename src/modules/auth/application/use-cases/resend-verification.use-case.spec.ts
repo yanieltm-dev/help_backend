@@ -3,6 +3,7 @@ import { ResendVerificationUseCase } from './resend-verification.use-case';
 import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
@@ -39,7 +40,7 @@ describe('ResendVerificationUseCase', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.invalidateAllForIdentifier).toHaveBeenCalledWith(
       emailStr,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
     );
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.save).toHaveBeenCalled();
@@ -91,7 +92,7 @@ describe('ResendVerificationUseCase', () => {
     expect(firstCall).toBeDefined();
     const [actualIdentifier, actualType, actualSince] = firstCall;
     expect(actualIdentifier).toBe(emailStr);
-    expect(actualType).toBe('email_verification');
+    expect(actualType).toBe(VerificationTokenType.EMAIL_VERIFICATION);
     expect(actualSince).toBeInstanceOf(Date);
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.invalidateAllForIdentifier).not.toHaveBeenCalled();

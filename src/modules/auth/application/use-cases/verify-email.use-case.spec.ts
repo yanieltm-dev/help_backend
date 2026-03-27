@@ -7,6 +7,7 @@ import type { Authenticator } from '../ports/authenticator.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
 import { createVerifyEmailUseCaseSut } from './test-utils/sut/create-verify-email-use-case-sut';
 import { parseDuration } from '@/shared/utils/parse-duration';
@@ -45,7 +46,7 @@ describe('VerifyEmailUseCase', () => {
     const verification = AuthEntitiesTestFactory.createVerificationToken({
       id: 'verification-id',
       identifier: email,
-      type: 'email_verification',
+      type: VerificationTokenType.EMAIL_VERIFICATION,
       expiresInMs: parseDuration('1h'),
     });
     const profile = AuthEntitiesTestFactory.createProfile({

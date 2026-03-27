@@ -136,6 +136,9 @@ export const authUseCaseProviders: Provider[] = [
             'auth.changePasswordTokenExpiresInMs',
             { infer: true },
           ),
+          otpMaxAttempts: configService.getOrThrow('auth.otpMaxAttempts', {
+            infer: true,
+          }),
         },
       );
     },
@@ -208,6 +211,9 @@ export const authUseCaseProviders: Provider[] = [
               infer: true,
             },
           ),
+          otpMaxAttempts: configService.getOrThrow('auth.otpMaxAttempts', {
+            infer: true,
+          }),
         },
       );
     },

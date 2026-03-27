@@ -15,6 +15,7 @@ import { AccountLockedError } from '../../domain/errors/account-locked.error';
 import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
 import { Session } from '../../domain/entities/session.entity';
 import { User } from '../../domain/entities/user.entity';
+import { buildAuthUserResponse } from '../mappers/auth-user.mapper';
 
 export interface LoginCommand {
   emailOrUsername: string;
@@ -126,13 +127,7 @@ export class LoginUseCase {
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email.value,
-        image: profile?.avatarUrl ?? null,
-        emailVerified: user.emailVerified,
-      },
+      user: buildAuthUserResponse(user, profile),
     };
   }
 }

@@ -8,7 +8,10 @@ import type { VerificationRepository } from '../../domain/ports/verification.rep
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
 
@@ -40,7 +43,7 @@ export class RequestPasswordResetUseCase {
     const recentCount =
       await this.verificationRepo.countRecentForIdentifierAndTypeSince(
         email,
-        'password_reset',
+        VerificationTokenType.PASSWORD_RESET,
         windowStart,
       );
 
@@ -51,7 +54,7 @@ export class RequestPasswordResetUseCase {
 
     await this.verificationRepo.invalidateAllForIdentifier(
       email,
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
     );
 
     const otp = Otp.generate().value;
@@ -61,7 +64,7 @@ export class RequestPasswordResetUseCase {
       this.idGenerator.generate(),
       email,
       hashedOtp,
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
       this.config.otpExpiresInMs,
     );
 

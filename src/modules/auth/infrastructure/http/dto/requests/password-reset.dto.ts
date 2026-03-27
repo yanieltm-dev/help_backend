@@ -7,6 +7,10 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
+import {
+  PASSWORD_VALIDATION_REGEX,
+  PASSWORD_VALIDATION_MESSAGE,
+} from '@/modules/auth/domain/value-objects/password.validation';
 
 export class RequestPasswordResetDto {
   @ApiProperty({ example: 'user@example.com' })
@@ -36,9 +40,8 @@ export class ChangePasswordWithTokenDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
-  @Matches(/^(?=.*\d)(?=.*[^a-zA-Z0-9]).*$/, {
-    message:
-      'Password too weak. It must have at least 8 characters, one number, and one special character.',
+  @Matches(PASSWORD_VALIDATION_REGEX, {
+    message: PASSWORD_VALIDATION_MESSAGE,
   })
   newPassword: string;
 }

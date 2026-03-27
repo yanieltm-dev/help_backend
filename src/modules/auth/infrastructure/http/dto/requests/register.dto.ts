@@ -8,6 +8,10 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import {
+  PASSWORD_VALIDATION_REGEX,
+  PASSWORD_VALIDATION_MESSAGE,
+} from '@/modules/auth/domain/value-objects/password.validation';
 import { MinAgeRegistration } from '../../validators/min-age-registration.validator';
 
 export class RegisterDto {
@@ -44,9 +48,8 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
-  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message:
-      'Password too weak. It must have at least 8 characters, one number, and one special character.',
+  @Matches(PASSWORD_VALIDATION_REGEX, {
+    message: PASSWORD_VALIDATION_MESSAGE,
   })
   password: string;
 }

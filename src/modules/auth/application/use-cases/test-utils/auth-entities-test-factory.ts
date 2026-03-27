@@ -2,7 +2,10 @@ import { Account } from '@/modules/auth/domain/entities/account.entity';
 import { Profile } from '@/modules/auth/domain/entities/profile.entity';
 import { Session } from '@/modules/auth/domain/entities/session.entity';
 import { User } from '@/modules/auth/domain/entities/user.entity';
-import { VerificationToken } from '@/modules/auth/domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '@/modules/auth/domain/entities/verification-token.entity';
 import { Password } from '@/modules/auth/domain/value-objects/password.vo';
 
 type CreateUserOverrides = Readonly<{
@@ -32,7 +35,7 @@ type CreateVerificationTokenOverrides = Readonly<{
   id?: string;
   identifier: string;
   hashedToken?: string;
-  type: 'email_verification' | 'password_reset';
+  type: VerificationTokenType;
   expiresInMs?: number;
 }>;
 

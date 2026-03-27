@@ -79,7 +79,7 @@ export function createVerifyEmailUseCaseSut(
       resolvedSessionRepo,
       resolvedProfileRepo,
       resolvedIdGenerator,
-      { sessionExpiresInMs: parseDuration('1h') },
+      { sessionExpiresInMs: parseDuration('1h'), otpMaxAttempts: 5 },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,

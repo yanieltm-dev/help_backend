@@ -4,6 +4,7 @@ import type { AccountRepository } from '../../domain/ports/account.repository.po
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import { Password } from '../../domain/value-objects/password.vo';
 import { Account } from '../../domain/entities/account.entity';
 import {
@@ -38,7 +39,7 @@ export class ChangePasswordWithTokenUseCase {
 
     const verification = await this.verificationRepo.findByIdAndType(
       tokenId,
-      'password_change',
+      VerificationTokenType.PASSWORD_CHANGE,
     );
 
     if (!verification) {

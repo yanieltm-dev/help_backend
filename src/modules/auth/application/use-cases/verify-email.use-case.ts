@@ -6,6 +6,8 @@ import type { Authenticator } from '../ports/authenticator.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
+import { buildAuthUserResponse } from '../mappers/auth-user.mapper';
 import {
   InvalidOtpError,
   ExpiredOtpError,
@@ -35,11 +37,10 @@ export interface VerifyEmailResponse {
 
 export type VerifyEmailUseCaseConfig = {
   sessionExpiresInMs: number;
+  otpMaxAttempts: number;
 };
 
 export class VerifyEmailUseCase {
-  private readonly MAX_ATTEMPTS = 5;
-
   constructor(
     private readonly userRepo: UserRepository,
     private readonly verificationRepo: VerificationRepository,
@@ -80,19 +81,13 @@ export class VerifyEmailUseCase {
         accessToken,
         refreshToken,
         accessTokenExpiresAt,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email.value,
-          image: profile?.avatarUrl ?? null,
-          emailVerified: true,
-        },
+        user: buildAuthUserResponse(user, profile, true),
       };
     }
 
     const verification = await this.verificationRepo.findByIdentifierAndType(
       email,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
     );
 
     if (!verification) {
@@ -103,7 +98,7 @@ export class VerifyEmailUseCase {
       throw new ExpiredOtpError();
     }
 
-    if (verification.hasExceededMaxAttempts(this.MAX_ATTEMPTS)) {
+    if (verification.hasExceededMaxAttempts(this.config.otpMaxAttempts)) {
       throw new MaxAttemptsExceededError();
     }
 
@@ -142,13 +137,7 @@ export class VerifyEmailUseCase {
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email.value,
-        image: profile?.avatarUrl ?? null,
-        emailVerified: true,
-      },
+      user: buildAuthUserResponse(user, profile, true),
     };
   }
 }

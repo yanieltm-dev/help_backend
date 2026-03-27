@@ -49,6 +49,35 @@ describe('ChangePasswordUseCase', () => {
     expect(sessionRepo.deleteByUserIdExceptToken).toHaveBeenCalled();
   });
 
+  it('deletes all sessions when currentRefreshToken is empty', async () => {
+    const inputUserId = 'user-id';
+    const account = new Account(
+      'acc-id',
+      inputUserId,
+      'credentials',
+      'user@example.com',
+      Password.createFromHash('old-hash'),
+    );
+    accountRepo.findByUserId.mockResolvedValue(account);
+    hasher.compare.mockResolvedValue(true);
+    hasher.hash.mockResolvedValue('new-hash');
+
+    await useCase.execute({
+      userId: inputUserId,
+      currentPassword: 'Password123!',
+      newPassword: 'NewPassword123!',
+      currentRefreshToken: '',
+    });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(accountRepo.save).toHaveBeenCalled();
+    // eslint-disable-next @typescript-eslint/unbound-method
+    expect(sessionRepo.deleteByUserId).toHaveBeenCalledWith(
+      inputUserId,
+      expect.anything(),
+    );
+  });
+
   it('throws InvalidCurrentPasswordError when current password is incorrect', async () => {
     const account = new Account(
       'acc-id',

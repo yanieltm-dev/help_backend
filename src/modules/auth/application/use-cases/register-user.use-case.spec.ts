@@ -1,8 +1,8 @@
-import { RegisterUserUseCase } from './register-user.use-case';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
-import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
-import { createRegisterUserUseCaseSut } from './test-utils/sut/create-register-user-use-case-sut';
 import { parseDuration } from '@/shared/utils/parse-duration';
+import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
+import { RegisterUserUseCase } from './register-user.use-case';
+import { createRegisterUserUseCaseSut } from './test-utils/sut/create-register-user-use-case-sut';
 
 describe('RegisterUserUseCase', () => {
   let useCase: RegisterUserUseCase;
@@ -18,7 +18,7 @@ describe('RegisterUserUseCase', () => {
     const command = {
       email: 'user@example.com',
       username: 'user123',
-      password: 'password123!',
+      password: 'Password123!',
       name: 'Alice',
       birthDate: '2000-01-01',
     };

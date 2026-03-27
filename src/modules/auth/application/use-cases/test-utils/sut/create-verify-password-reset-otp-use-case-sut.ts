@@ -11,6 +11,7 @@ type CreateVerifyPasswordResetOtpUseCaseSutOverrides = Partial<
     verificationRepo: jest.Mocked<VerificationRepository>;
     hasher: jest.Mocked<PasswordHasher>;
     idGenerator: jest.Mocked<IIdGenerator>;
+    config: { changePasswordTokenExpiresInMs: number; otpMaxAttempts: number };
   }>
 >;
 
@@ -37,6 +38,10 @@ export function createVerifyPasswordResetOtpUseCaseSut(
     overrides.hasher ?? defaultHasher;
   const resolvedIdGenerator: jest.Mocked<IIdGenerator> =
     overrides.idGenerator ?? defaultIdGenerator;
+  const resolvedConfig = overrides.config ?? {
+    changePasswordTokenExpiresInMs: parseDuration('15m'),
+    otpMaxAttempts: 5,
+  };
 
   resolvedIdGenerator.generate
     .mockReturnValueOnce('change-token-id')
@@ -48,7 +53,7 @@ export function createVerifyPasswordResetOtpUseCaseSut(
       resolvedVerificationRepo,
       resolvedHasher,
       resolvedIdGenerator,
-      { changePasswordTokenExpiresInMs: parseDuration('15m') },
+      resolvedConfig,
     ),
     verificationRepo: resolvedVerificationRepo,
     hasher: resolvedHasher,

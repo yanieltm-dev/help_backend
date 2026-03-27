@@ -1,18 +1,21 @@
-import { parseDuration } from '@/shared/utils/parse-duration';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
-import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
-import { createChangePasswordWithTokenUseCaseSut } from './test-utils/sut/create-change-password-with-token-use-case-sut';
-import { ChangePasswordWithTokenUseCase } from './change-password-with-token.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import {
   ExpiredChangePasswordTokenError,
   InvalidChangePasswordTokenError,
 } from '../../domain/errors/change-password-token.errors';
+import type { AccountRepository } from '../../domain/ports/account.repository.port';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
+import { ChangePasswordWithTokenUseCase } from './change-password-with-token.use-case';
+import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
+import { createChangePasswordWithTokenUseCaseSut } from './test-utils/sut/create-change-password-with-token-use-case-sut';
 
 describe('ChangePasswordWithTokenUseCase', () => {
   let useCase: ChangePasswordWithTokenUseCase;
@@ -42,7 +45,7 @@ describe('ChangePasswordWithTokenUseCase', () => {
       tokenId,
       email,
       'hashed-secret',
-      'password_change',
+      VerificationTokenType.PASSWORD_CHANGE,
       new Date(Date.now() + parseDuration('15m')),
       0,
     );
@@ -61,7 +64,7 @@ describe('ChangePasswordWithTokenUseCase', () => {
 
     await useCase.execute({
       changePasswordToken: `${tokenId}.${secret}`,
-      newPassword: 'new-password-123!',
+      newPassword: 'New-password-123!',
     });
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -102,7 +105,7 @@ describe('ChangePasswordWithTokenUseCase', () => {
       'token-id',
       'user@example.com',
       'hashed-secret',
-      'password_change',
+      VerificationTokenType.PASSWORD_CHANGE,
       new Date(Date.now() - 1000),
       0,
     );
@@ -121,7 +124,7 @@ describe('ChangePasswordWithTokenUseCase', () => {
       'token-id',
       'user@example.com',
       'hashed-secret',
-      'password_change',
+      VerificationTokenType.PASSWORD_CHANGE,
       new Date(Date.now() + 10000),
       0,
     );

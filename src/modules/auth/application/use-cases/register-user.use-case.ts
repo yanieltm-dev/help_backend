@@ -12,7 +12,10 @@ import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { User } from '../../domain/entities/user.entity';
 import { Account } from '../../domain/entities/account.entity';
 import { Profile } from '../../domain/entities/profile.entity';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import { Password } from '../../domain/value-objects/password.vo';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
@@ -75,7 +78,7 @@ export class RegisterUserUseCase {
       this.idGenerator.generate(),
       email,
       hashedOtp,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
       this.config.otpExpiresInMs,
     );
 
@@ -83,7 +86,7 @@ export class RegisterUserUseCase {
     await this.uow.run(async (tx) => {
       await this.verificationRepo.invalidateAllForIdentifier(
         email,
-        'email_verification',
+        VerificationTokenType.EMAIL_VERIFICATION,
       );
       await this.userRepo.save(user, tx);
       await this.accountRepo.save(account, tx);

@@ -1,4 +1,5 @@
 import { RequestPasswordResetUseCase } from './request-password-reset.use-case';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
@@ -32,7 +33,7 @@ describe('RequestPasswordResetUseCase', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.invalidateAllForIdentifier).toHaveBeenCalledWith(
       email,
-      'password_reset',
+      VerificationTokenType.PASSWORD_RESET,
     );
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.save).toHaveBeenCalled();
