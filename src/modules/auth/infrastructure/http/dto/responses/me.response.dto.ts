@@ -10,9 +10,18 @@ export class MeResponseDto {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ nullable: true })
-  image: string | null;
-
   @ApiProperty()
   emailVerified: boolean;
+
+  @ApiProperty({ nullable: true })
+  username: string | null;
+
+  @ApiProperty({ nullable: true })
+  displayName: string | null;
+
+  @ApiProperty({ nullable: true })
+  avatarUrl: string | null;
+
+  @ApiProperty({ nullable: true, type: String, format: 'date' })
+  birthDate: Date | null;
 }

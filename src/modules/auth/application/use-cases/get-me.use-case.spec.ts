@@ -1,10 +1,10 @@
 import { GetMeUseCase } from './get-me.use-case';
 
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import { User } from '../../domain/entities/user.entity';
 import { Profile } from '../../domain/entities/profile.entity';
+import { User } from '../../domain/entities/user.entity';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
 import { AuthUseCaseTestKit } from './test-utils/auth-use-case-test-kit';
 
 describe('GetMeUseCase', () => {
@@ -37,8 +37,11 @@ describe('GetMeUseCase', () => {
       id: user.id,
       name: user.name,
       email: user.email.value,
-      image: profile.avatarUrl,
       emailVerified: true,
+      username: profile.username,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      birthDate: profile.birthDate,
     });
   });
 
@@ -52,8 +55,11 @@ describe('GetMeUseCase', () => {
       id: user.id,
       name: user.name,
       email: user.email.value,
-      image: null,
       emailVerified: true,
+      username: null,
+      displayName: null,
+      avatarUrl: null,
+      birthDate: null,
     });
   });
 

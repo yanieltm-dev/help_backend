@@ -1,6 +1,6 @@
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
 
 export interface GetMeQuery {
   userId: string;
@@ -10,8 +10,11 @@ export interface GetMeResult {
   id: string;
   name: string;
   email: string;
-  image: string | null;
   emailVerified: boolean;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  birthDate: Date | null;
 }
 
 export class GetMeUseCase {
@@ -30,8 +33,11 @@ export class GetMeUseCase {
       id: user.id,
       name: user.name,
       email: user.email.value,
-      image: profile?.avatarUrl ?? null,
       emailVerified: user.emailVerified,
+      username: profile?.username ?? null,
+      displayName: profile?.displayName ?? null,
+      avatarUrl: profile?.avatarUrl ?? null,
+      birthDate: profile?.birthDate ?? null,
     };
   }
 }
