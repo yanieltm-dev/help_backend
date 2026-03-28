@@ -67,16 +67,15 @@ describe('ChangePasswordWithTokenUseCase', () => {
       newPassword: 'New-password-123!',
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(uow.run).toHaveBeenCalled();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(accountRepo.save).toHaveBeenCalled();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(sessionRepo.deleteByUserId).toHaveBeenCalledWith(
       'user-id',
       expect.anything(),
     );
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(verificationRepo.delete).toHaveBeenCalledWith(tokenId);
   });
 

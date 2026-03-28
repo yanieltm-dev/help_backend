@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { StorageProvider } from '../../domain/ports/storage-provider.port';
 import { FileKeyGenerator } from '../../domain/services/file-key-generator.service';

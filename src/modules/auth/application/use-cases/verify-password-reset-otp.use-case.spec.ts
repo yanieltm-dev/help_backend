@@ -51,9 +51,9 @@ describe('VerifyPasswordResetOtpUseCase', () => {
     expect(result.changePasswordToken).toBe(
       'change-token-id.change-token-secret',
     );
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(verificationRepo.delete).toHaveBeenCalledWith('otp-verification-id');
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(verificationRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'change-token-id',
@@ -123,7 +123,6 @@ describe('VerifyPasswordResetOtpUseCase', () => {
       InvalidOtpError,
     );
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'otp-verification-id',

@@ -67,18 +67,17 @@ describe('RefreshSessionUseCase', () => {
       refreshToken: newRefreshToken,
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(sessionRepo.findByToken).toHaveBeenCalledWith(oldRefreshToken);
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(authenticator.verifyRefreshToken).toHaveBeenCalledWith(
       oldRefreshToken,
     );
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(authenticator.generateTokens).toHaveBeenCalledWith({
       sub: userId,
       email,
     });
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(sessionRepo.save).toHaveBeenCalled();
     const savedSession = sessionRepo.save.mock.calls[0][0];
     expect(savedSession.id).toBe(existingSession.id);
@@ -108,7 +107,6 @@ describe('RefreshSessionUseCase', () => {
       useCase.execute({ refreshToken: 'expired-token' }),
     ).rejects.toThrow(InvalidRefreshTokenError);
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(sessionRepo.deleteByToken).toHaveBeenCalledWith('expired-token');
   });
 

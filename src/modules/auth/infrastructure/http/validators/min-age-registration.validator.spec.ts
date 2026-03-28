@@ -20,7 +20,7 @@ describe('MinAgeRegistrationConstraint', () => {
     const result = validator.validate(birthDate);
 
     expect(result).toBe(true);
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(configService.getOrThrow).toHaveBeenCalledWith(
       'auth.minAgeRegister',
       { infer: true },

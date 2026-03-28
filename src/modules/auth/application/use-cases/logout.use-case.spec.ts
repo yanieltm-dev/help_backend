@@ -16,14 +16,12 @@ describe('LogoutUseCase', () => {
   it('should delete session when refresh token is provided', async () => {
     await useCase.execute({ refreshToken: 'refresh-token' });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(sessionRepo.deleteByToken).toHaveBeenCalledWith('refresh-token');
   });
 
   it('should be idempotent when refresh token is missing', async () => {
     await useCase.execute({ refreshToken: '' });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(sessionRepo.deleteByToken).not.toHaveBeenCalled();
   });
 });

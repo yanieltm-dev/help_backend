@@ -43,7 +43,6 @@ describe('MailService', () => {
       html: '<p>Hello</p>',
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'user@example.com',

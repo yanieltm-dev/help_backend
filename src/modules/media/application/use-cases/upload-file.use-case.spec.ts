@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { FileUploadedDomainEvent } from '../../domain/events/file-uploaded.domain-event';
