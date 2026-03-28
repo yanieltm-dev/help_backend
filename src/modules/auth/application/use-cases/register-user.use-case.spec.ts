@@ -19,13 +19,12 @@ describe('RegisterUserUseCase', () => {
       email: 'user@example.com',
       username: 'user123',
       password: 'Password123!',
-      name: 'Alice',
+      displayName: 'Alice',
       birthDate: '2000-01-01',
     };
 
     await useCase.execute(command);
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(eventBus.publish).toHaveBeenCalledWith(
       expect.any(UserRegisteredDomainEvent),
     );

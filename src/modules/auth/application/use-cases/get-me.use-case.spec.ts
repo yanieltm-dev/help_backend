@@ -20,7 +20,7 @@ describe('GetMeUseCase', () => {
   });
 
   it('should return current user information', async () => {
-    const user = User.create('user-id', 'me@example.com', 'Me', true);
+    const user = User.create('user-id', 'me@example.com', true);
     const profile = Profile.create(
       'profile-id',
       user.id,
@@ -35,7 +35,6 @@ describe('GetMeUseCase', () => {
 
     await expect(useCase.execute({ userId: user.id })).resolves.toEqual({
       id: user.id,
-      name: user.name,
       email: user.email.value,
       emailVerified: true,
       username: profile.username,
@@ -46,14 +45,13 @@ describe('GetMeUseCase', () => {
   });
 
   it('should return image as null when profile is missing', async () => {
-    const user = User.create('user-id', 'me@example.com', 'Me', true);
+    const user = User.create('user-id', 'me@example.com', true);
 
     userRepo.findById.mockResolvedValue(user);
     profileRepo.findByUserId.mockResolvedValue(null);
 
     await expect(useCase.execute({ userId: user.id })).resolves.toEqual({
       id: user.id,
-      name: user.name,
       email: user.email.value,
       emailVerified: true,
       username: null,

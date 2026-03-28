@@ -1,14 +1,14 @@
 import { LoginUseCase } from './login.use-case';
 
-import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
+import { Account } from '../../domain/entities/account.entity';
 import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
+import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
-import type { Authenticator } from '../ports/authenticator.port';
-import { Account } from '../../domain/entities/account.entity';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
 import { Password } from '../../domain/value-objects/password.vo';
+import type { Authenticator } from '../ports/authenticator.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
 import { createLoginUseCaseSut } from './test-utils/sut/create-login-use-case-sut';
 
@@ -41,12 +41,11 @@ describe('LoginUseCase', () => {
     const user = AuthEntitiesTestFactory.createUser({
       id: userId,
       email: emailStr,
-      name: 'Test User',
       isEmailVerified: true,
     });
     const profile = AuthEntitiesTestFactory.createProfile({
       userId,
-      name: 'Test User',
+      displayName: 'Test User',
       username: 'testuser',
       avatarUrl: 'https://example.com/avatar.png',
       birthDate: new Date('2000-01-01'),
@@ -82,14 +81,14 @@ describe('LoginUseCase', () => {
       refreshToken: 'refresh-token',
       user: {
         id: userId,
-        name: 'Test User',
+        userName: 'testuser',
+        displayName: 'Test User',
         email: emailStr,
-        image: 'https://example.com/avatar.png',
+        avatarUrl: 'https://example.com/avatar.png',
         emailVerified: true,
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(authenticator.generateTokens).toHaveBeenCalledWith({
       sub: user.id,
       email: user.email.value,
@@ -109,7 +108,6 @@ describe('LoginUseCase', () => {
     const user = AuthEntitiesTestFactory.createUser({
       id: userId,
       email: emailStr,
-      name: 'Test User',
       isEmailVerified: false,
     });
     const account = new Account(

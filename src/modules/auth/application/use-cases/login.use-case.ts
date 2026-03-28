@@ -3,19 +3,22 @@ export type LoginUseCaseConfig = {
   lockoutDurationMs: number;
   sessionExpiresInMs: number;
 };
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
-import type { Authenticator } from '../ports/authenticator.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
-import { AccountLockedError } from '../../domain/errors/account-locked.error';
-import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
 import { Session } from '../../domain/entities/session.entity';
 import { User } from '../../domain/entities/user.entity';
-import { buildAuthUserResponse } from '../mappers/auth-user.mapper';
+import { AccountLockedError } from '../../domain/errors/account-locked.error';
+import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
+import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
+import type { AccountRepository } from '../../domain/ports/account.repository.port';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import {
+  AuthUserResponse,
+  buildAuthUserResponse,
+} from '../mappers/auth-user.mapper';
+import type { Authenticator } from '../ports/authenticator.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface LoginCommand {
   emailOrUsername: string;
@@ -28,13 +31,7 @@ export interface LoginResponse {
   accessToken: string;
   accessTokenExpiresAt: Date;
   refreshToken: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-    emailVerified: boolean;
-  };
+  user: AuthUserResponse;
 }
 
 export class LoginUseCase {

@@ -3,19 +3,20 @@ export type ResendVerificationUseCaseConfig = {
   maxRequests: number;
   windowMs: number;
 };
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import {
   VerificationToken,
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
-import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
-import { Otp } from '../../domain/value-objects/otp.vo';
-import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import { Otp } from '../../domain/value-objects/otp.vo';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface ResendVerificationCommand {
   email: string;
@@ -24,6 +25,7 @@ export interface ResendVerificationCommand {
 export class ResendVerificationUseCase {
   constructor(
     private readonly userRepo: UserRepository,
+    private readonly profileRepo: ProfileRepository,
     private readonly verificationRepo: VerificationRepository,
     private readonly hasher: PasswordHasher,
     private readonly eventBus: IEventBus,
@@ -72,11 +74,14 @@ export class ResendVerificationUseCase {
     );
 
     await this.verificationRepo.save(verification);
+
+    const profile = await this.profileRepo.findByUserId(user.id);
+
     this.eventBus.publish(
       new VerificationResendedDomainEvent(
         email,
         otp,
-        user.name,
+        profile?.displayName ?? profile?.username ?? '',
         this.config.otpExpiresInMs,
       ),
     );

@@ -1,11 +1,12 @@
-import { User } from '../../domain/entities/user.entity';
 import type { Profile } from '../../domain/entities/profile.entity';
+import { User } from '../../domain/entities/user.entity';
 
 export interface AuthUserResponse {
   id: string;
-  name: string;
+  userName: string;
+  displayName: string;
   email: string;
-  image: string | null;
+  avatarUrl: string | null;
   emailVerified: boolean;
 }
 
@@ -16,9 +17,10 @@ export function buildAuthUserResponse(
 ): AuthUserResponse {
   return {
     id: user.id,
-    name: user.name,
+    userName: profile?.username || '',
+    displayName: profile?.displayName || '',
     email: user.email.value,
-    image: profile?.avatarUrl ?? null,
+    avatarUrl: profile?.avatarUrl ?? null,
     emailVerified: emailVerified ?? user.emailVerified,
   };
 }

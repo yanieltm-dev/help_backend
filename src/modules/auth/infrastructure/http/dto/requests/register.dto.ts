@@ -1,3 +1,7 @@
+import {
+  PASSWORD_VALIDATION_MESSAGE,
+  PASSWORD_VALIDATION_REGEX,
+} from '@/modules/auth/domain/value-objects/password.validation';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -8,10 +12,6 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import {
-  PASSWORD_VALIDATION_REGEX,
-  PASSWORD_VALIDATION_MESSAGE,
-} from '@/modules/auth/domain/value-objects/password.validation';
 import { MinAgeRegistration } from '../../validators/min-age-registration.validator';
 
 export class RegisterDto {
@@ -20,7 +20,7 @@ export class RegisterDto {
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(100)
-  name: string;
+  displayName: string;
 
   @ApiProperty({ example: 'johndoe' })
   @IsString()

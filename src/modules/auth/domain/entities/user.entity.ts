@@ -12,7 +12,6 @@ export class User {
   constructor(
     public readonly id: string,
     public readonly email: Email,
-    public readonly name: string,
     public readonly emailVerified: boolean = false,
     public readonly status: UserStatus = UserStatus.PENDING,
     public readonly createdAt: Date = new Date(),
@@ -21,26 +20,17 @@ export class User {
   static create(
     id: string,
     email: string,
-    name: string,
     emailVerified: boolean = false,
     status: UserStatus = UserStatus.PENDING,
     createdAt: Date = new Date(),
   ): User {
-    return new User(
-      id,
-      Email.create(email),
-      name,
-      emailVerified,
-      status,
-      createdAt,
-    );
+    return new User(id, Email.create(email), emailVerified, status, createdAt);
   }
 
   verifyEmail(): User {
     return User.create(
       this.id,
       this.email.value,
-      this.name,
       true,
       UserStatus.ACTIVE,
       this.createdAt,

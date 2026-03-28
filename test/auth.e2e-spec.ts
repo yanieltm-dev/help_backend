@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
+import { Pool } from 'pg';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { Pool } from 'pg';
 import { bootstrapE2eApp } from './utils/bootstrap-e2e-app';
 
 interface ApiResponse {
@@ -15,7 +15,7 @@ type LoginResponseBody = {
   accessTokenExpiresAt: string;
   user?: {
     id: string;
-    name: string;
+    userName: string;
     email: string;
     image: string | null;
     emailVerified: boolean;
@@ -57,7 +57,7 @@ describe('AuthController (e2e)', () => {
 
   const timestamp = Date.now();
   const validUser = {
-    name: 'Test User',
+    displayName: 'Test User',
     username: `testuser_${timestamp}`,
     email: `test_${timestamp}@example.com`,
     password: 'Password123!',
@@ -283,9 +283,9 @@ describe('AuthController (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('id');
-          expect(res.body).toHaveProperty('name', user.name);
+          expect(res.body).toHaveProperty('displayName', user.displayName);
           expect(res.body).toHaveProperty('email', user.email.toLowerCase());
-          expect(res.body).toHaveProperty('image');
+          expect(res.body).toHaveProperty('avatarUrl');
           expect(res.body).toHaveProperty('emailVerified', true);
         });
     });

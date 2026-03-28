@@ -11,7 +11,6 @@ import { Password } from '@/modules/auth/domain/value-objects/password.vo';
 type CreateUserOverrides = Readonly<{
   id?: string;
   email?: string;
-  name?: string;
   isEmailVerified?: boolean;
 }>;
 
@@ -19,7 +18,7 @@ type CreateProfileOverrides = Readonly<{
   id?: string;
   userId: string;
   username?: string;
-  name?: string;
+  displayName?: string;
   avatarUrl?: string;
   birthDate?: Date;
 }>;
@@ -62,14 +61,13 @@ export const AuthEntitiesTestFactory: AuthEntitiesTestFactoryType = {
   createUser: (overrides: CreateUserOverrides = {}): User => {
     const id: string = overrides.id ?? 'user-id';
     const email: string = overrides.email ?? 'user@example.com';
-    const name: string = overrides.name ?? 'Test User';
     const isEmailVerified: boolean = overrides.isEmailVerified ?? true;
-    return User.create(id, email, name, isEmailVerified);
+    return User.create(id, email, isEmailVerified);
   },
   createProfile: (overrides: CreateProfileOverrides): Profile => {
     const id: string = overrides.id ?? 'profile-id';
     const username: string = overrides.username ?? 'testuser';
-    const name: string = overrides.name ?? 'Test User';
+    const displayName: string = overrides.displayName ?? 'Test User';
     const avatarUrl: string =
       overrides.avatarUrl ?? 'https://example.com/avatar.png';
     const birthDate: Date = overrides.birthDate ?? new Date('2000-01-01');
@@ -77,7 +75,7 @@ export const AuthEntitiesTestFactory: AuthEntitiesTestFactoryType = {
       id,
       overrides.userId,
       username,
-      name,
+      displayName,
       avatarUrl,
       birthDate,
     );

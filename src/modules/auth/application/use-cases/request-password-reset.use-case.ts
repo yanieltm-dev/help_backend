@@ -3,17 +3,18 @@ export type RequestPasswordResetUseCaseConfig = {
   maxRequests: number;
   windowMs: number;
 };
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import {
   VerificationToken,
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
-import { Otp } from '../../domain/value-objects/otp.vo';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import { Otp } from '../../domain/value-objects/otp.vo';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface RequestPasswordResetCommand {
   email: string;
@@ -22,6 +23,7 @@ export interface RequestPasswordResetCommand {
 export class RequestPasswordResetUseCase {
   constructor(
     private readonly userRepo: UserRepository,
+    private readonly profileRepo: ProfileRepository,
     private readonly verificationRepo: VerificationRepository,
     private readonly hasher: PasswordHasher,
     private readonly eventBus: IEventBus,
@@ -70,10 +72,12 @@ export class RequestPasswordResetUseCase {
 
     await this.verificationRepo.save(verification);
 
+    const profile = await this.profileRepo.findByUserId(user.id);
+
     this.eventBus.publish(
       new PasswordResetRequestedDomainEvent(
         email,
-        user.name,
+        profile?.displayName ?? profile?.username ?? '',
         otp,
         this.config.otpExpiresInMs,
       ),

@@ -5,16 +5,19 @@ class LoginUserResponseDto {
   id: string;
 
   @ApiProperty()
-  name: string;
-
-  @ApiProperty()
   email: string;
 
-  @ApiProperty({ nullable: true })
-  image: string | null;
+  @ApiProperty()
+  avatarUrl: string | null;
 
   @ApiProperty()
   emailVerified: boolean;
+
+  @ApiProperty()
+  userName: string;
+
+  @ApiProperty()
+  displayName: string;
 }
 
 export class LoginResponseDto {

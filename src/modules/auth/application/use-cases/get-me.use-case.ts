@@ -8,7 +8,6 @@ export interface GetMeQuery {
 
 export interface GetMeResult {
   id: string;
-  name: string;
   email: string;
   emailVerified: boolean;
   username: string | null;
@@ -31,7 +30,6 @@ export class GetMeUseCase {
 
     return {
       id: user.id,
-      name: user.name,
       email: user.email.value,
       emailVerified: user.emailVerified,
       username: profile?.username ?? null,

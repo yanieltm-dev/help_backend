@@ -26,7 +26,7 @@ describe('Auth Verification (e2e)', () => {
 
   const timestamp = Date.now();
   const validUser = {
-    name: 'Verification User',
+    displayName: 'Verification User',
     username: `verify_${timestamp}`,
     email: `verify_${timestamp}@example.com`,
     password: 'Password123!',

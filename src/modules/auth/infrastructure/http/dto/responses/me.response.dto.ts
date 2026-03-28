@@ -5,9 +5,6 @@ export class MeResponseDto {
   id: string;
 
   @ApiProperty()
-  name: string;
-
-  @ApiProperty()
   email: string;
 
   @ApiProperty()

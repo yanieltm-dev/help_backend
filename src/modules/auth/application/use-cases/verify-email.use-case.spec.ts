@@ -1,16 +1,16 @@
 import { VerifyEmailUseCase } from './verify-email.use-case';
 
+import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { parseDuration } from '@/shared/utils/parse-duration';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { Authenticator } from '../ports/authenticator.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 import { AuthEntitiesTestFactory } from './test-utils/auth-entities-test-factory';
 import { createVerifyEmailUseCaseSut } from './test-utils/sut/create-verify-email-use-case-sut';
-import { parseDuration } from '@/shared/utils/parse-duration';
 
 describe('VerifyEmailUseCase', () => {
   let useCase: VerifyEmailUseCase;
@@ -40,7 +40,6 @@ describe('VerifyEmailUseCase', () => {
     const user = AuthEntitiesTestFactory.createUser({
       id: 'user-id',
       email,
-      name: 'Test User',
       isEmailVerified: false,
     });
     const verification = AuthEntitiesTestFactory.createVerificationToken({
@@ -53,7 +52,7 @@ describe('VerifyEmailUseCase', () => {
       id: 'profile-id',
       userId: user.id,
       username: 'testuser',
-      name: 'Test User',
+      displayName: 'Test User',
       avatarUrl: 'https://example.com/avatar.png',
       birthDate: new Date('2000-01-01'),
     });
@@ -84,26 +83,23 @@ describe('VerifyEmailUseCase', () => {
       refreshToken: 'refresh-token',
       user: {
         id: user.id,
-        name: user.name,
+        userName: profile.username,
+        displayName: profile.displayName,
         email: user.email.value,
-        image: profile.avatarUrl,
+        avatarUrl: profile.avatarUrl,
         emailVerified: true,
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(authenticator.generateTokens).toHaveBeenCalledWith({
       sub: user.id,
       email: user.email.value,
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(sessionRepo.save).toHaveBeenCalled();
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(userRepo.save).toHaveBeenCalled();
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(verificationRepo.delete).toHaveBeenCalledWith(verification.id);
   });
 });

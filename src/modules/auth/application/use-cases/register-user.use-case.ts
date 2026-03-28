@@ -1,31 +1,31 @@
 export type RegisterUserUseCaseConfig = {
   otpExpiresInMs: number;
 };
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { User } from '../../domain/entities/user.entity';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Account } from '../../domain/entities/account.entity';
 import { Profile } from '../../domain/entities/profile.entity';
+import { User } from '../../domain/entities/user.entity';
 import {
   VerificationToken,
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
-import { Password } from '../../domain/value-objects/password.vo';
-import { Otp } from '../../domain/value-objects/otp.vo';
 import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
 import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
+import type { AccountRepository } from '../../domain/ports/account.repository.port';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import { Otp } from '../../domain/value-objects/otp.vo';
+import { Password } from '../../domain/value-objects/password.vo';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface RegisterUserCommand {
   email: string;
   username: string;
   password: string;
-  name: string;
+  displayName: string;
   birthDate: string;
 }
 
@@ -43,7 +43,7 @@ export class RegisterUserUseCase {
   ) {}
 
   async execute(command: RegisterUserCommand) {
-    const { email, username, password, name, birthDate } = command;
+    const { email, username, password, displayName, birthDate } = command;
 
     // Business Validation
     const existingUser = await this.userRepo.findByEmail(email);
@@ -59,7 +59,7 @@ export class RegisterUserUseCase {
     const otp = Otp.generate().value;
     const hashedOtp = await this.hasher.hash(otp);
 
-    const user = User.create(userId, email, name);
+    const user = User.create(userId, email);
     const account = Account.createCredentials(
       this.idGenerator.generate(),
       userId,
@@ -70,7 +70,7 @@ export class RegisterUserUseCase {
       this.idGenerator.generate(),
       userId,
       username,
-      name,
+      displayName,
       null,
       new Date(birthDate),
     );
@@ -99,7 +99,7 @@ export class RegisterUserUseCase {
         userId,
         email,
         otp,
-        name,
+        displayName,
         this.config.otpExpiresInMs,
       ),
     );

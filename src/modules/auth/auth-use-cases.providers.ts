@@ -79,6 +79,7 @@ export const authUseCaseProviders: Provider[] = [
     provide: RequestPasswordResetUseCase,
     inject: [
       USER_REPOSITORY,
+      PROFILE_REPOSITORY,
       VERIFICATION_REPOSITORY,
       PASSWORD_HASHER,
       EVENT_BUS,
@@ -87,6 +88,7 @@ export const authUseCaseProviders: Provider[] = [
     ],
     useFactory: (
       userRepo: UserRepository,
+      profileRepo: ProfileRepository,
       verificationRepo: VerificationRepository,
       hasher: PasswordHasher,
       eventBus: IEventBus,
@@ -95,6 +97,7 @@ export const authUseCaseProviders: Provider[] = [
     ) => {
       return new RequestPasswordResetUseCase(
         userRepo,
+        profileRepo,
         verificationRepo,
         hasher,
         eventBus,
@@ -222,6 +225,7 @@ export const authUseCaseProviders: Provider[] = [
     provide: ResendVerificationUseCase,
     inject: [
       USER_REPOSITORY,
+      PROFILE_REPOSITORY,
       VERIFICATION_REPOSITORY,
       PASSWORD_HASHER,
       EVENT_BUS,
@@ -230,6 +234,7 @@ export const authUseCaseProviders: Provider[] = [
     ],
     useFactory: (
       userRepo: UserRepository,
+      profileRepo: ProfileRepository,
       verificationRepo: VerificationRepository,
       hasher: PasswordHasher,
       eventBus: IEventBus,
@@ -238,6 +243,7 @@ export const authUseCaseProviders: Provider[] = [
     ) => {
       return new ResendVerificationUseCase(
         userRepo,
+        profileRepo,
         verificationRepo,
         hasher,
         eventBus,
