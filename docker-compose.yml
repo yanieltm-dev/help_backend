@@ -51,6 +51,20 @@ services:
       POSTGRES_USER: ${DATABASE_USER:-user}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-secret}
 
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - 'minio_data:/bitnami/minio/data'
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
+    command: server /data --console-address ":9001"
+
 volumes:
   node_modules:
   postgres_db_data:
+  minio_data:
+    driver: local

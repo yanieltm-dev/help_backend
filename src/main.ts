@@ -1,7 +1,3 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import { AppModule } from './app.module';
 import {
   HttpStatus,
   UnprocessableEntityException,
@@ -9,13 +5,17 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
-import { useContainer } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from './core/config/config.type';
-import { Logger } from 'pino-nestjs';
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { join } from 'path';
+import { Logger } from 'pino-nestjs';
+import { AppModule } from './app.module';
+import { AllConfigType } from './core/config/config.type';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -33,16 +33,23 @@ async function bootstrap() {
     configService.getOrThrow('app.apiPrefix', { infer: true }),
   );
 
-  app.useStaticAssets(join(process.cwd(), 'assets'), { prefix: '/assets' });
-
-  app.use(helmet());
-
   app.enableCors({
     origin: configService.getOrThrow('app.allowedOrigins', { infer: true }),
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
+
+  app.useStaticAssets(join(process.cwd(), 'assets'), { prefix: '/assets' });
+
+  const mediaConfig = configService.get('media', { infer: true });
+  if (mediaConfig?.provider === 'local') {
+    app.useStaticAssets(join(process.cwd(), mediaConfig.localPath), {
+      prefix: '/uploads',
+    });
+  }
+
+  app.use(helmet());
 
   app.use(
     cookieParser(
