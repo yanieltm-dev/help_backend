@@ -26,4 +26,21 @@ export class Profile {
       birthDate,
     );
   }
+
+  update(payload: {
+    username?: string;
+    displayName?: string;
+    avatarUrl?: string | null;
+    birthDate?: Date;
+  }): Profile {
+    return new Profile(
+      this.id,
+      this.userId,
+      payload.username?.toLowerCase() ?? this.username,
+      payload.displayName ?? this.displayName,
+      payload.avatarUrl !== undefined ? payload.avatarUrl : this.avatarUrl,
+      payload.birthDate ?? this.birthDate,
+      this.createdAt,
+    );
+  }
 }

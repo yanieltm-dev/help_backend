@@ -1,4 +1,7 @@
+import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { SharedModule } from '@/shared/shared.module';
+import { ID_GENERATOR, UNIT_OF_WORK } from '@/shared/shared.tokens';
 import { Module } from '@nestjs/common';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
@@ -22,6 +25,23 @@ import { PROFILE_REPOSITORY, USER_REPOSITORY } from './users.tokens';
         profileRepo: ProfileRepository,
       ) => {
         return new GetMeUseCase(userRepo, profileRepo);
+      },
+    },
+    {
+      provide: UpdateProfileUseCase,
+      inject: [USER_REPOSITORY, PROFILE_REPOSITORY, UNIT_OF_WORK, ID_GENERATOR],
+      useFactory: (
+        userRepo: UserRepository,
+        profileRepo: ProfileRepository,
+        uow: IUnitOfWork,
+        idGenerator: IIdGenerator,
+      ) => {
+        return new UpdateProfileUseCase(
+          userRepo,
+          profileRepo,
+          uow,
+          idGenerator,
+        );
       },
     },
     {

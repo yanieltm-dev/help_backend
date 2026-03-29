@@ -45,13 +45,25 @@ export class DrizzleProfileRepository implements ProfileRepository {
 
   async save(profile: Profile, tx?: DrizzleDatabase): Promise<void> {
     const db = tx || this.db;
-    await db.insert(schema.profile).values({
-      id: profile.id,
-      userId: profile.userId,
-      username: profile.username,
-      displayName: profile.displayName,
-      avatarUrl: profile.avatarUrl,
-      birthDate: profile.birthDate,
-    });
+    await db
+      .insert(schema.profile)
+      .values({
+        id: profile.id,
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
+        birthDate: profile.birthDate,
+      })
+      .onConflictDoUpdate({
+        target: schema.profile.id,
+        set: {
+          username: profile.username,
+          displayName: profile.displayName,
+          avatarUrl: profile.avatarUrl,
+          birthDate: profile.birthDate,
+          updatedAt: new Date(),
+        },
+      });
   }
 }
