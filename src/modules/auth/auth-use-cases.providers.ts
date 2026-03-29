@@ -278,6 +278,7 @@ export const authUseCaseProviders: Provider[] = [
       AUTHENTICATOR,
       SESSION_REPOSITORY,
       ID_GENERATOR,
+      UNIT_OF_WORK,
       ConfigService,
     ],
     useFactory: (
@@ -288,6 +289,7 @@ export const authUseCaseProviders: Provider[] = [
       authenticator: Authenticator,
       sessionRepo: SessionRepository,
       idGenerator: IIdGenerator,
+      uow: IUnitOfWork,
       configService: ConfigService<AllConfigType>,
     ) => {
       return new LoginUseCase(
@@ -312,6 +314,7 @@ export const authUseCaseProviders: Provider[] = [
             { infer: true },
           ),
         },
+        uow,
       );
     },
   },

@@ -4,6 +4,7 @@ export type LoginUseCaseConfig = {
   sessionExpiresInMs: number;
 };
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Session } from '../../domain/entities/session.entity';
 import { User } from '../../domain/entities/user.entity';
 import { AccountLockedError } from '../../domain/errors/account-locked.error';
@@ -44,12 +45,12 @@ export class LoginUseCase {
     private readonly sessionRepo: SessionRepository,
     private readonly idGenerator: IIdGenerator,
     private readonly config: LoginUseCaseConfig,
+    private readonly unitOfWork: IUnitOfWork,
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResponse> {
     const { emailOrUsername, password, ipAddress, userAgent } = command;
 
-    // Find user by email or username
     let user: User | null = null;
 
     if (emailOrUsername.includes('@')) {
@@ -65,18 +66,15 @@ export class LoginUseCase {
       throw new InvalidCredentialsError();
     }
 
-    // Find account
     const account = await this.accountRepo.findByUserId(user.id);
     if (!account) {
       throw new InvalidCredentialsError();
     }
 
-    // Check if locked
     if (account.isLocked()) {
       throw new AccountLockedError(account.lockedUntil);
     }
 
-    // Verify password
     const isPasswordValid = await this.hasher.compare(
       password,
       account.password?.value || '',
@@ -91,19 +89,16 @@ export class LoginUseCase {
       throw new InvalidCredentialsError();
     }
 
-    // Check if email verified
     if (!user.emailVerified) {
       throw new AccountNotVerifiedError();
     }
 
-    // Generate tokens
     const { accessToken, refreshToken, accessTokenExpiresAt } =
       await this.authenticator.generateTokens({
         sub: user.id,
         email: user.email.value,
       });
 
-    // Register session
     const sessionExpiresInMs = this.config.sessionExpiresInMs;
     const session = Session.create(
       this.idGenerator.generate(),
@@ -113,10 +108,11 @@ export class LoginUseCase {
       ipAddress,
       userAgent,
     );
-    await this.sessionRepo.save(session);
 
-    // Reset failed attempts
-    await this.accountRepo.save(account.resetFailedAttempts());
+    await this.unitOfWork.run(async (tx) => {
+      await this.sessionRepo.save(session, tx);
+      await this.accountRepo.save(account.resetFailedAttempts(), tx);
+    });
 
     const profile = await this.profileRepo.findByUserId(user.id);
 

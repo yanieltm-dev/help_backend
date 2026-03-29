@@ -1,7 +1,5 @@
-import { parseDuration } from '@/shared/utils/parse-duration';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { parseDuration } from '@/shared/utils/parse-duration';
 import {
   VerificationToken,
   VerificationTokenType,
@@ -11,6 +9,8 @@ import {
   InvalidOtpError,
   MaxAttemptsExceededError,
 } from '../../domain/errors/otp.errors';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 import { createVerifyPasswordResetOtpUseCaseSut } from './test-utils/sut/create-verify-password-reset-otp-use-case-sut';
 import { VerifyPasswordResetOtpUseCase } from './verify-password-reset-otp.use-case';
 

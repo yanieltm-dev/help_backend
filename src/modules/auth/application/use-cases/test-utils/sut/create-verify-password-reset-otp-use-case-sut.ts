@@ -1,10 +1,10 @@
 import { VerifyPasswordResetOtpUseCase } from '@/modules/auth/application/use-cases/verify-password-reset-otp.use-case';
 import { parseDuration } from '@/shared/utils/parse-duration';
 
-import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
-import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
+import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
+import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 
 type CreateVerifyPasswordResetOtpUseCaseSutOverrides = Partial<
   Readonly<{

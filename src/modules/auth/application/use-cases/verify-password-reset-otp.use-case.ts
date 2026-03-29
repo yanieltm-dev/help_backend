@@ -1,5 +1,3 @@
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import {
   VerificationToken,
@@ -10,6 +8,8 @@ import {
   InvalidOtpError,
   MaxAttemptsExceededError,
 } from '../../domain/errors/otp.errors';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export type VerifyPasswordResetOtpUseCaseConfig = {
   changePasswordTokenExpiresInMs: number;
