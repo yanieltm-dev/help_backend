@@ -40,4 +40,10 @@ export class UpdateProfileDto {
   @IsUrl()
   @MaxLength(255)
   avatarUrl?: string;
+
+  @ApiPropertyOptional({ example: 'Hello, I am a supportive person!' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  bio?: string;
 }

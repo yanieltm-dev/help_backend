@@ -64,6 +64,7 @@ export class UsersController {
       displayName: dto.displayName,
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
       avatarUrl: dto.avatarUrl,
+      bio: dto.bio,
     });
 
     return this.getMeUseCase.execute({ userId: auth.userId });

@@ -25,6 +25,7 @@ export class DrizzleProfileRepository implements ProfileRepository {
       row.displayName || '',
       row.avatarUrl ?? null,
       row.birthDate || new Date(),
+      row.bio ?? null,
     );
   }
 
@@ -40,6 +41,7 @@ export class DrizzleProfileRepository implements ProfileRepository {
       row.displayName || '',
       row.avatarUrl ?? null,
       row.birthDate || new Date(),
+      row.bio ?? null,
     );
   }
 
@@ -54,6 +56,7 @@ export class DrizzleProfileRepository implements ProfileRepository {
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
         birthDate: profile.birthDate,
+        bio: profile.bio,
       })
       .onConflictDoUpdate({
         target: schema.profile.id,
@@ -62,6 +65,7 @@ export class DrizzleProfileRepository implements ProfileRepository {
           displayName: profile.displayName,
           avatarUrl: profile.avatarUrl,
           birthDate: profile.birthDate,
+          bio: profile.bio,
           updatedAt: new Date(),
         },
       });

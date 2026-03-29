@@ -6,6 +6,7 @@ export class Profile {
     public readonly displayName: string,
     public readonly avatarUrl: string | null,
     public readonly birthDate: Date,
+    public readonly bio: string | null,
     public readonly createdAt: Date = new Date(),
   ) {}
 
@@ -16,6 +17,7 @@ export class Profile {
     displayName: string,
     avatarUrl: string | null,
     birthDate: Date,
+    bio: string | null = null,
   ): Profile {
     return new Profile(
       id,
@@ -24,6 +26,7 @@ export class Profile {
       displayName,
       avatarUrl,
       birthDate,
+      bio,
     );
   }
 
@@ -32,6 +35,7 @@ export class Profile {
     displayName?: string;
     avatarUrl?: string | null;
     birthDate?: Date;
+    bio?: string | null;
   }): Profile {
     return new Profile(
       this.id,
@@ -40,6 +44,7 @@ export class Profile {
       payload.displayName ?? this.displayName,
       payload.avatarUrl !== undefined ? payload.avatarUrl : this.avatarUrl,
       payload.birthDate ?? this.birthDate,
+      payload.bio !== undefined ? payload.bio : this.bio,
       this.createdAt,
     );
   }

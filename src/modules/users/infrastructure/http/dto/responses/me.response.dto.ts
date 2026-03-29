@@ -21,4 +21,7 @@ export class MeResponseDto {
 
   @ApiProperty({ nullable: true, type: String, format: 'date' })
   birthDate: Date | null;
+
+  @ApiProperty({ nullable: true })
+  bio: string | null;
 }

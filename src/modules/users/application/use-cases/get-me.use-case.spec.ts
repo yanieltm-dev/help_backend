@@ -55,6 +55,7 @@ describe('GetMeUseCase', () => {
       displayName: 'Test User',
       avatarUrl: 'https://example.com/avatar.png',
       birthDate: new Date('2000-01-01'),
+      bio: null,
     });
   });
 
@@ -79,6 +80,7 @@ describe('GetMeUseCase', () => {
       displayName: null,
       avatarUrl: null,
       birthDate: null,
+      bio: null,
     });
   });
 
