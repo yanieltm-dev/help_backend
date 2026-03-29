@@ -1,12 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsUUID,
+  Matches,
+  Min,
+} from 'class-validator';
+
+const KEY_PATTERN = /^[a-zA-Z0-9/_-]+$/;
 
 export class ConfirmUploadDto {
   @ApiProperty({
     description: 'Unique identifier for the file (UUID)',
     example: '019d10f2-0d3d-71f2-8358-ed329040b57f',
   })
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   fileId!: string;
 
@@ -16,6 +25,10 @@ export class ConfirmUploadDto {
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(KEY_PATTERN, {
+    message:
+      'Invalid key format: must contain only alphanumeric characters, underscores, hyphens, and forward slashes',
+  })
   key!: string;
 
   @ApiProperty({
@@ -39,6 +52,6 @@ export class ConfirmUploadDto {
     description: 'Actual file size in bytes',
   })
   @IsNumber()
-  @IsNotEmpty()
+  @Min(1)
   size!: number;
 }

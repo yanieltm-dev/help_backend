@@ -1,17 +1,17 @@
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { MediaFile } from '../../domain/entities/media-file.entity';
+import { InvalidFileError } from '../../domain/errors/invalid-file.error';
+import { InvalidUploadStrategyError } from '../../domain/errors/invalid-upload-strategy.error';
 import { FileUploadedDomainEvent } from '../../domain/events/file-uploaded.domain-event';
 import { MediaRepository } from '../../domain/ports/media-repository.port';
 import { StorageProvider } from '../../domain/ports/storage-provider.port';
-import { FileName } from '../../domain/value-objects/file-name.vo';
-import { MimeType } from '../../domain/value-objects/mime-type.vo';
-import { FileSize } from '../../domain/value-objects/file-size.vo';
-
-import { InvalidUploadStrategyError } from '../../domain/errors/invalid-upload-strategy.error';
 import {
   MEDIA_UPLOAD_STRATEGY,
   type MediaUploadStrategy,
 } from '../../domain/types/media-upload-strategy';
+import { FileName } from '../../domain/value-objects/file-name.vo';
+import { FileSize } from '../../domain/value-objects/file-size.vo';
+import { MimeType } from '../../domain/value-objects/mime-type.vo';
 
 export interface ConfirmUploadCommand {
   fileId: string;
@@ -49,6 +49,11 @@ export class ConfirmUploadUseCase {
     FileName.create(command.originalName);
     MimeType.create(command.mimeType);
     FileSize.create(command.size);
+
+    const fileExists = await this.storageProvider.exists(command.key);
+    if (!fileExists) {
+      throw new InvalidFileError('File does not exist in storage');
+    }
 
     const publicUrl = this.storageProvider.getPublicUrl(command.key);
 

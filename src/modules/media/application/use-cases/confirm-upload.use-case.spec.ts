@@ -16,6 +16,7 @@ describe('ConfirmUploadUseCase', () => {
   beforeEach(() => {
     mockStorageProvider = {
       getPublicUrl: jest.fn(),
+      exists: jest.fn().mockResolvedValue(true),
     } as unknown as jest.Mocked<StorageProvider>;
 
     mockMediaRepository = {

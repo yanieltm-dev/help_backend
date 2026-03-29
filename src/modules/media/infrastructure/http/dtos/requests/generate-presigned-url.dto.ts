@@ -1,9 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsMimeType,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
+
+const MAX_SAFE_FILE_SIZE = 104857600;
 
 export class GeneratePresignedUrlDto {
+  @ApiProperty({ example: '019d10f2-0d3d-71f2-8358-ed329040b57f' })
+  @IsUUID()
+  @IsNotEmpty()
+  fileId!: string;
+
   @ApiProperty({ example: 'image/png' })
-  @IsString()
+  @IsMimeType()
   @IsNotEmpty()
   mimeType!: string;
 
@@ -14,6 +29,7 @@ export class GeneratePresignedUrlDto {
 
   @ApiProperty({ example: 1024, description: 'File size in bytes' })
   @IsNumber()
-  @IsNotEmpty()
+  @Min(1)
+  @Max(MAX_SAFE_FILE_SIZE)
   size!: number;
 }

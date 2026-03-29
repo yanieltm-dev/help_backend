@@ -20,6 +20,7 @@ export interface PresignedUrlParams {
 export interface StorageProvider {
   upload(params: UploadParams): Promise<UploadResult>;
   delete(key: string): Promise<void>;
+  exists(key: string): Promise<boolean>;
   getPublicUrl(key: string): string;
   getPresignedUrl(params: PresignedUrlParams): Promise<string>;
   supportsPresignedUrls(): boolean;

@@ -2,6 +2,7 @@ import type { AllConfigType } from '@/core/config/config.type';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -66,6 +67,19 @@ export class S3StorageProvider implements StorageProvider {
       Key: key,
     });
     await this.client.send(command);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+      await this.client.send(command);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getPublicUrl(key: string): string {

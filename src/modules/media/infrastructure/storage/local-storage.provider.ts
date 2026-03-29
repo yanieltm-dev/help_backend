@@ -21,6 +21,7 @@ export class LocalStorageProvider implements StorageProvider {
       this.configService.get('media.publicBaseUrl', { infer: true }) ||
       'http://localhost:3000/uploads';
   }
+
   getPresignedUrl(): Promise<string> {
     return Promise.reject(
       new Error('Local storage does not support presigned URLs'),
@@ -44,6 +45,16 @@ export class LocalStorageProvider implements StorageProvider {
       await fs.unlink(fullPath);
     } catch {
       // File doesn't exist, ignore
+    }
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const fullPath = join(this.localPath, key);
+    try {
+      await fs.access(fullPath);
+      return true;
+    } catch {
+      return false;
     }
   }
 
