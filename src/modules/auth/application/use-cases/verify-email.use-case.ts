@@ -1,3 +1,5 @@
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Session } from '../../domain/entities/session.entity';
@@ -7,9 +9,7 @@ import {
   InvalidOtpError,
   MaxAttemptsExceededError,
 } from '../../domain/errors/otp.errors';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { buildAuthUserResponse } from '../mappers/auth-user.mapper';
 import type { Authenticator } from '../ports/authenticator.port';

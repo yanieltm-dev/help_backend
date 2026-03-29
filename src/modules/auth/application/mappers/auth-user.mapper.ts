@@ -1,5 +1,5 @@
-import type { Profile } from '../../domain/entities/profile.entity';
-import { User } from '../../domain/entities/user.entity';
+import type { Profile } from '@/modules/users/domain/entities/profile.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
 
 export interface AuthUserResponse {
   id: string;

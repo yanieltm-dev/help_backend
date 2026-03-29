@@ -1,11 +1,11 @@
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { parseDuration } from '@/shared/utils/parse-duration';
-import { Profile } from '../../domain/entities/profile.entity';
-import { User } from '../../domain/entities/user.entity';
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
 import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { RequestPasswordResetUseCase } from './request-password-reset.use-case';
 import { createRequestPasswordResetUseCaseSut } from './test-utils/sut/create-request-password-reset-use-case-sut';

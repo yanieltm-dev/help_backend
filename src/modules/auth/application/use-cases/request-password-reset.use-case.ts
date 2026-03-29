@@ -10,8 +10,8 @@ import {
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
 import { PasswordResetRequestedDomainEvent } from '../../domain/events/password-reset-requested.domain-event';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import type { PasswordHasher } from '../ports/password-hasher.port';

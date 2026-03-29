@@ -1,6 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
 import { DomainErrorMapperRegistry } from '@/core/filters/domain-error-registry';
-import { UserAlreadyExistsError } from '../../../domain/errors/user-already-exists.error';
 import {
   InvalidOtpError,
   ExpiredOtpError,
@@ -9,7 +8,6 @@ import {
 import { AccountLockedError } from '../../../domain/errors/account-locked.error';
 import { AccountNotVerifiedError } from '../../../domain/errors/account-not-verified.error';
 import { InvalidCredentialsError } from '../../../domain/errors/invalid-credentials.error';
-import { UserNotFoundError } from '../../../domain/errors/user-not-found.error';
 import { EmailAlreadyVerifiedError } from '../../../domain/errors/email-already-verified.error';
 import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
 import { InvalidCurrentPasswordError } from '../../../domain/errors/invalid-current-password.error';
@@ -20,11 +18,6 @@ import {
 } from '../../../domain/errors/change-password-token.errors';
 
 export function registerAuthDomainErrors() {
-  DomainErrorMapperRegistry.register(UserAlreadyExistsError, {
-    status: HttpStatus.CONFLICT,
-    error: 'Conflict',
-  });
-
   DomainErrorMapperRegistry.register(InvalidOtpError, {
     status: HttpStatus.BAD_REQUEST,
     error: 'Bad Request',
@@ -78,11 +71,6 @@ export function registerAuthDomainErrors() {
   DomainErrorMapperRegistry.register(InvalidNewPasswordError, {
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     error: 'Unprocessable Entity',
-  });
-
-  DomainErrorMapperRegistry.register(UserNotFoundError, {
-    status: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
   });
 
   DomainErrorMapperRegistry.register(EmailAlreadyVerifiedError, {

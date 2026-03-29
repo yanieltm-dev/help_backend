@@ -3,17 +3,17 @@ export type LoginUseCaseConfig = {
   lockoutDurationMs: number;
   sessionExpiresInMs: number;
 };
+import { User } from '@/modules/users/domain/entities/user.entity';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Session } from '../../domain/entities/session.entity';
-import { User } from '../../domain/entities/user.entity';
 import { AccountLockedError } from '../../domain/errors/account-locked.error';
 import { AccountNotVerifiedError } from '../../domain/errors/account-not-verified.error';
 import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials.error';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
 import {
   AuthUserResponse,
   buildAuthUserResponse,

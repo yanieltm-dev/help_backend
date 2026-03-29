@@ -2,14 +2,14 @@ import { ResendVerificationUseCase } from './resend-verification.use-case';
 
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { parseDuration } from '@/shared/utils/parse-duration';
-import { Profile } from '../../domain/entities/profile.entity';
-import { User } from '../../domain/entities/user.entity';
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
 import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
-import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import { UserNotFoundError } from '@/modules/users/domain/errors/user-not-found.error';
 import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { createResendVerificationUseCaseSut } from './test-utils/sut/create-resend-verification-use-case-sut';
 

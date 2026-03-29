@@ -1,9 +1,8 @@
-import { CurrentAuth } from '@/modules/auth/infrastructure/http/decorators/current-auth.decorator';
-import { JwtAuthGuard } from '@/modules/auth/infrastructure/security/guards/jwt-auth.guard';
 import type { AuthenticatedRequestUser } from '@/modules/auth/infrastructure/security/jwt.strategy';
 import { ConfirmUploadUseCase } from '@/modules/media/application/use-cases/confirm-upload.use-case';
 import { GeneratePresignedUrlUseCase } from '@/modules/media/application/use-cases/generate-presigned-url.use-case';
 import { UploadFileUseCase } from '@/modules/media/application/use-cases/upload-file.use-case';
+import { CurrentAuth, JwtAuthGuard } from '@/shared/auth';
 import {
   Body,
   Controller,

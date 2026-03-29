@@ -1,7 +1,6 @@
 import { AllConfigType } from '@/core/config/config.type';
 import { ChangePasswordWithTokenUseCase } from '@/modules/auth/application/use-cases/change-password-with-token.use-case';
 import { ChangePasswordUseCase } from '@/modules/auth/application/use-cases/change-password.use-case';
-import { GetMeUseCase } from '@/modules/auth/application/use-cases/get-me.use-case';
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
 import { LogoutUseCase } from '@/modules/auth/application/use-cases/logout.use-case';
 import { RefreshSessionUseCase } from '@/modules/auth/application/use-cases/refresh-session.use-case';
@@ -11,10 +10,10 @@ import { ResendVerificationUseCase } from '@/modules/auth/application/use-cases/
 import { VerifyEmailUseCase } from '@/modules/auth/application/use-cases/verify-email.use-case';
 import { VerifyPasswordResetOtpUseCase } from '@/modules/auth/application/use-cases/verify-password-reset-otp.use-case';
 import { InvalidRefreshTokenError } from '@/modules/auth/domain/errors/invalid-refresh-token.error';
+import { CurrentAuth, JwtAuthGuard } from '@/shared/auth';
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -32,9 +31,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { JwtAuthGuard } from '../../security/guards/jwt-auth.guard';
 import type { AuthenticatedRequestUser } from '../../security/jwt.strategy';
-import { CurrentAuth } from '../decorators/current-auth.decorator';
 import { ChangePasswordDto } from '../dto/requests/change-password.dto';
 import { LoginDto } from '../dto/requests/login.dto';
 import {
@@ -48,7 +45,6 @@ import {
   VerifyEmailDto,
 } from '../dto/requests/verification.dto';
 import { LoginResponseDto } from '../dto/responses/login.response.dto';
-import { MeResponseDto } from '../dto/responses/me.response.dto';
 import { RegisterResponseDto } from '../dto/responses/register.response.dto';
 
 function getCookie(req: Request, name: string): string | undefined {
@@ -78,7 +74,6 @@ export class AuthController {
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
     private readonly changePasswordWithTokenUseCase: ChangePasswordWithTokenUseCase,
-    private readonly getMeUseCase: GetMeUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
@@ -306,20 +301,6 @@ export class AuthController {
     });
 
     return { message: 'Logged out' };
-  }
-
-  @Get('me')
-  @Version('1')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current authenticated user' })
-  @ApiResponse({ status: 200, type: MeResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async me(
-    @CurrentAuth() auth: AuthenticatedRequestUser,
-  ): Promise<MeResponseDto> {
-    return this.getMeUseCase.execute({ userId: auth.userId });
   }
 
   @Patch('change-password')

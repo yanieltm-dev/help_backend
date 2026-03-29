@@ -1,10 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import type { DrizzleDatabase } from '@/core/database/connection';
 import { DATABASE_CONNECTION } from '@/core/database/database.module';
 import * as schema from '@/core/database/schema';
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
+import { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { DrizzleDatabase } from '@/core/database/connection';
-import { ProfileRepository } from '@/modules/auth/domain/ports/profile.repository.port';
-import { Profile } from '@/modules/auth/domain/entities/profile.entity';
 
 @Injectable()
 export class DrizzleProfileRepository implements ProfileRepository {

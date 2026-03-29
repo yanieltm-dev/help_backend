@@ -1,4 +1,5 @@
 import { AllConfigType } from '@/core/config/config.type';
+import { UsersModule } from '@/modules/users/users.module';
 import { SharedModule } from '@/shared/shared.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -9,9 +10,7 @@ import {
   ACCOUNT_REPOSITORY,
   AUTHENTICATOR,
   PASSWORD_HASHER,
-  PROFILE_REPOSITORY,
   SESSION_REPOSITORY,
-  USER_REPOSITORY,
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
@@ -21,9 +20,7 @@ import { PasswordResetRequestedListener } from './infrastructure/listeners/passw
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
 import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
-import { DrizzleProfileRepository } from './infrastructure/persistence/repositories/drizzle-profile.repository';
 import { DrizzleSessionRepository } from './infrastructure/persistence/repositories/drizzle-session.repository';
-import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
 import { DrizzleVerificationRepository } from './infrastructure/persistence/repositories/drizzle-verification.repository';
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
 import { JwtAuthenticator } from './infrastructure/security/jwt-authenticator';
@@ -33,6 +30,7 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
   imports: [
     SharedModule,
     PassportModule,
+    UsersModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -54,9 +52,7 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
     VerificationResendedListener,
     PasswordResetRequestedListener,
     JwtStrategy,
-    { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
-    { provide: PROFILE_REPOSITORY, useClass: DrizzleProfileRepository },
     {
       provide: VERIFICATION_REPOSITORY,
       useClass: DrizzleVerificationRepository,
@@ -65,6 +61,7 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
     { provide: AUTHENTICATOR, useClass: JwtAuthenticator },
     { provide: SESSION_REPOSITORY, useClass: DrizzleSessionRepository },
   ],
+  exports: [ACCOUNT_REPOSITORY, SESSION_REPOSITORY, VERIFICATION_REPOSITORY],
 })
 export class AuthModule {
   constructor() {

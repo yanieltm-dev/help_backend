@@ -1,7 +1,7 @@
 import { Account } from '@/modules/auth/domain/entities/account.entity';
-import { Profile } from '@/modules/auth/domain/entities/profile.entity';
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
 import { Session } from '@/modules/auth/domain/entities/session.entity';
-import { User } from '@/modules/auth/domain/entities/user.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
 import {
   VerificationToken,
   VerificationTokenType,

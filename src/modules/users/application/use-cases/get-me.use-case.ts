@@ -1,6 +1,6 @@
-import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 
 export interface GetMeQuery {
   userId: string;

@@ -3,7 +3,7 @@ import { ChangePasswordWithTokenUseCase } from '@/modules/auth/application/use-c
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
 import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';

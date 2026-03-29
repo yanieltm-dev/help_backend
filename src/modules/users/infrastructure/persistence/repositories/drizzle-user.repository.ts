@@ -1,8 +1,8 @@
 import type { DrizzleDatabase } from '@/core/database/connection';
 import { DATABASE_CONNECTION } from '@/core/database/database.module';
 import * as schema from '@/core/database/schema';
-import { User, UserStatus } from '@/modules/auth/domain/entities/user.entity';
-import { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import { User, UserStatus } from '@/modules/users/domain/entities/user.entity';
+import { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 

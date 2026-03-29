@@ -14,6 +14,7 @@ import { AppExceptionFilter } from './core/filters/app-exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { MediaModule } from './modules/media/media.module';
+import { UsersModule } from './modules/users/users.module';
 import { MailModule } from './shared/mail/mail.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -46,6 +47,7 @@ import { SharedModule } from './shared/shared.module';
     HealthModule,
     DatabaseModule,
     AuthModule,
+    UsersModule,
     MediaModule,
     MailModule,
     SharedModule,

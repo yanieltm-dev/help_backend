@@ -1,4 +1,10 @@
 import { AllConfigType } from '@/core/config/config.type';
+import { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
+import {
+  PROFILE_REPOSITORY,
+  USER_REPOSITORY,
+} from '@/modules/users/users.tokens';
 import { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
@@ -9,7 +15,6 @@ import type { Authenticator } from './application/ports/authenticator.port';
 import type { PasswordHasher } from './application/ports/password-hasher.port';
 import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token.use-case';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
-import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
@@ -22,15 +27,11 @@ import {
   ACCOUNT_REPOSITORY,
   AUTHENTICATOR,
   PASSWORD_HASHER,
-  PROFILE_REPOSITORY,
   SESSION_REPOSITORY,
-  USER_REPOSITORY,
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
 import { AccountRepository } from './domain/ports/account.repository.port';
-import { ProfileRepository } from './domain/ports/profile.repository.port';
 import { SessionRepository } from './domain/ports/session.repository.port';
-import { UserRepository } from './domain/ports/user.repository.port';
 import { VerificationRepository } from './domain/ports/verification.repository.port';
 
 export const authUseCaseProviders: Provider[] = [
@@ -320,14 +321,13 @@ export const authUseCaseProviders: Provider[] = [
   },
   {
     provide: RefreshSessionUseCase,
-    inject: [SESSION_REPOSITORY, USER_REPOSITORY, AUTHENTICATOR, ConfigService],
+    inject: [SESSION_REPOSITORY, AUTHENTICATOR, ConfigService],
     useFactory: (
       sessionRepo: SessionRepository,
-      userRepo: UserRepository,
       authenticator: Authenticator,
       configService: ConfigService<AllConfigType>,
     ) =>
-      new RefreshSessionUseCase(sessionRepo, userRepo, authenticator, {
+      new RefreshSessionUseCase(sessionRepo, authenticator, {
         sessionExpiresInMs: configService.getOrThrow(
           'auth.sessionExpiresInMs',
           { infer: true },
@@ -339,13 +339,6 @@ export const authUseCaseProviders: Provider[] = [
     inject: [SESSION_REPOSITORY],
     useFactory: (sessionRepo: SessionRepository) => {
       return new LogoutUseCase(sessionRepo);
-    },
-  },
-  {
-    provide: GetMeUseCase,
-    inject: [USER_REPOSITORY, PROFILE_REPOSITORY],
-    useFactory: (userRepo: UserRepository, profileRepo: ProfileRepository) => {
-      return new GetMeUseCase(userRepo, profileRepo);
     },
   },
   {

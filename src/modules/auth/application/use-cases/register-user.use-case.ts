@@ -1,21 +1,21 @@
 export type RegisterUserUseCaseConfig = {
   otpExpiresInMs: number;
 };
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
+import { UserAlreadyExistsError } from '@/modules/users/domain/errors/user-already-exists.error';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { Account } from '../../domain/entities/account.entity';
-import { Profile } from '../../domain/entities/profile.entity';
-import { User } from '../../domain/entities/user.entity';
 import {
   VerificationToken,
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
 import { UserRegisteredDomainEvent } from '../../domain/events/user-registered.domain-event';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import { Password } from '../../domain/value-objects/password.vo';

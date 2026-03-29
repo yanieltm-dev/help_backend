@@ -1,5 +1,5 @@
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { AccountRepository } from '../../domain/ports/account.repository.port';
 import type { SessionRepository } from '../../domain/ports/session.repository.port';
 import type { PasswordHasher } from '../ports/password-hasher.port';

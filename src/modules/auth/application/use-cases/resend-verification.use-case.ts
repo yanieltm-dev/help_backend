@@ -3,6 +3,9 @@ export type ResendVerificationUseCaseConfig = {
   maxRequests: number;
   windowMs: number;
 };
+import { UserNotFoundError } from '@/modules/users/domain/errors/user-not-found.error';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import {
@@ -10,10 +13,7 @@ import {
   VerificationTokenType,
 } from '../../domain/entities/verification-token.entity';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
-import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
 import { Otp } from '../../domain/value-objects/otp.vo';
 import type { PasswordHasher } from '../ports/password-hasher.port';
