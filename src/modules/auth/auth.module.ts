@@ -14,6 +14,7 @@ import {
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
 import { AuthController } from './infrastructure/http/controllers/auth.controller';
+import { CookieService } from './infrastructure/http/services/cookie.service';
 import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-error-registration';
 import { MinAgeRegistrationConstraint } from './infrastructure/http/validators/min-age-registration.validator';
 import { PasswordResetRequestedListener } from './infrastructure/listeners/password-reset-requested.listener';
@@ -47,6 +48,7 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
   controllers: [AuthController],
   providers: [
     ...authUseCaseProviders,
+    CookieService,
     MinAgeRegistrationConstraint,
     UserRegisteredListener,
     VerificationResendedListener,

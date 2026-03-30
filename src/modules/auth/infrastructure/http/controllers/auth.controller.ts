@@ -1,4 +1,3 @@
-import { AllConfigType } from '@/core/config/config.type';
 import { ChangePasswordWithTokenUseCase } from '@/modules/auth/application/use-cases/change-password-with-token.use-case';
 import { ChangePasswordUseCase } from '@/modules/auth/application/use-cases/change-password.use-case';
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
@@ -23,7 +22,6 @@ import {
   UseGuards,
   Version,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -46,20 +44,7 @@ import {
 } from '../dto/requests/verification.dto';
 import { LoginResponseDto } from '../dto/responses/login.response.dto';
 import { RegisterResponseDto } from '../dto/responses/register.response.dto';
-
-function getCookie(req: Request, name: string): string | undefined {
-  const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })
-    .cookies;
-  if (!cookiesUnknown || typeof cookiesUnknown !== 'object') return undefined;
-  const value = (cookiesUnknown as Record<string, unknown>)[name];
-  return typeof value === 'string' ? value : undefined;
-}
-
-function getUserAgent(req: Request): string | undefined {
-  const header = req.headers['user-agent'];
-  if (typeof header === 'string') return header;
-  return undefined;
-}
+import { CookieService } from '../services/cookie.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -75,7 +60,7 @@ export class AuthController {
     private readonly verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
     private readonly changePasswordWithTokenUseCase: ChangePasswordWithTokenUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
-    private readonly configService: ConfigService<AllConfigType>,
+    private readonly cookieService: CookieService,
   ) {}
 
   @Post('register')
@@ -115,17 +100,10 @@ export class AuthController {
       await this.verifyEmailUseCase.execute({
         ...dto,
         ipAddress: req.ip,
-        userAgent: getUserAgent(req),
+        userAgent: this.cookieService.getUserAgent(req),
       });
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, refreshToken);
 
     return {
       accessToken,
@@ -219,17 +197,10 @@ export class AuthController {
       await this.loginUseCase.execute({
         ...dto,
         ipAddress: req.ip,
-        userAgent: getUserAgent(req),
+        userAgent: this.cookieService.getUserAgent(req),
       });
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: true, // Should be true in production, assuming HTTPS
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, refreshToken);
 
     return {
       accessToken,
@@ -248,7 +219,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
-    const refreshToken = getCookie(req, 'refresh_token');
+    const refreshToken = this.cookieService.getRefreshToken(req);
 
     if (!refreshToken) {
       throw new InvalidRefreshTokenError();
@@ -261,17 +232,10 @@ export class AuthController {
     } = await this.refreshSessionUseCase.execute({
       refreshToken,
       ipAddress: req.ip,
-      userAgent: getUserAgent(req),
+      userAgent: this.cookieService.getUserAgent(req),
     });
 
-    res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, newRefreshToken);
 
     return {
       accessToken,
@@ -288,17 +252,13 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const refreshToken = getCookie(req, 'refresh_token');
+    const refreshToken = this.cookieService.getRefreshToken(req);
 
     await this.logoutUseCase.execute({
       refreshToken: refreshToken ?? '',
     });
 
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-    });
+    this.cookieService.clearRefreshToken(res);
 
     return { message: 'Logged out' };
   }
@@ -317,7 +277,7 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Req() req: Request,
   ): Promise<{ message: string }> {
-    const refreshToken = getCookie(req, 'refresh_token') ?? '';
+    const refreshToken = this.cookieService.getRefreshToken(req) ?? '';
     await this.changePasswordUseCase.execute({
       userId: auth.userId,
       currentPassword: dto.currentPassword,
