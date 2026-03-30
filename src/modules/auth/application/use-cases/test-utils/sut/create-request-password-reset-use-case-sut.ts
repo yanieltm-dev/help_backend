@@ -67,8 +67,8 @@ export function createRequestPasswordResetUseCaseSut(
       resolvedIdGenerator,
       {
         otpExpiresInMs: parseDuration('10m'),
-        maxRequests: 5,
-        windowMs: parseDuration('15m'),
+        maxRequests: 3,
+        windowMs: parseDuration('1h'),
       },
     ),
     userRepo: resolvedUserRepo,

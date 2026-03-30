@@ -17,6 +17,8 @@ export type AuthConfig = {
   sessionExpiresInMs: number;
   resendVerificationMaxRequests: number;
   resendVerificationWindowMs: number;
+  passwordResetRequestMaxRequests: number;
+  passwordResetRequestWindowMs: number;
   minAgeRegister: number;
 };
 
@@ -71,6 +73,14 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  AUTH_PASSWORD_RESET_REQUEST_MAX_REQUESTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_PASSWORD_RESET_REQUEST_WINDOW?: string;
+
+  @IsString()
+  @IsOptional()
   AUTH_MIN_AGE_REGISTER?: string;
 }
 
@@ -103,6 +113,13 @@ export default registerAs<AuthConfig>('auth', () => {
     ),
     resendVerificationWindowMs: parseDuration(
       process.env.AUTH_RESEND_VERIFICATION_WINDOW || '1h',
+    ),
+    passwordResetRequestMaxRequests: parseInt(
+      process.env.AUTH_PASSWORD_RESET_REQUEST_MAX_REQUESTS || '3',
+      10,
+    ),
+    passwordResetRequestWindowMs: parseDuration(
+      process.env.AUTH_PASSWORD_RESET_REQUEST_WINDOW || '1h',
     ),
     cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
     minAgeRegister: parseInt(process.env.AUTH_MIN_AGE_REGISTER || '13', 10),

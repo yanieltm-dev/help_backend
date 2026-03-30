@@ -72,7 +72,7 @@ describe('UpdateProfileUseCase', () => {
     });
 
     expect(profileRepo.save).toHaveBeenCalled();
-    const savedProfile = (profileRepo.save as jest.Mock).mock.calls[0][0];
+    const savedProfile = profileRepo.save.mock.calls[0][0];
     expect(savedProfile.username).toBe('newusername');
     expect(savedProfile.displayName).toBe('New Name');
   });
@@ -95,7 +95,7 @@ describe('UpdateProfileUseCase', () => {
     });
 
     expect(profileRepo.save).toHaveBeenCalled();
-    const savedProfile = (profileRepo.save as jest.Mock).mock.calls[0][0];
+    const savedProfile = profileRepo.save.mock.calls[0][0];
     expect(savedProfile.username).toBe('newuser');
     expect(savedProfile.displayName).toBe('New User');
   });

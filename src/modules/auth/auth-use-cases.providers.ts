@@ -107,12 +107,16 @@ export const authUseCaseProviders: Provider[] = [
           otpExpiresInMs: configService.getOrThrow('auth.otpExpiresInMs', {
             infer: true,
           }),
-          maxRequests: configService.getOrThrow('auth.maxFailedAttempts', {
-            infer: true,
-          }),
-          windowMs: configService.getOrThrow('auth.lockoutDurationMs', {
-            infer: true,
-          }),
+          maxRequests: configService.getOrThrow(
+            'auth.passwordResetRequestMaxRequests',
+            { infer: true },
+          ),
+          windowMs: configService.getOrThrow(
+            'auth.passwordResetRequestWindowMs',
+            {
+              infer: true,
+            },
+          ),
         },
       );
     },
