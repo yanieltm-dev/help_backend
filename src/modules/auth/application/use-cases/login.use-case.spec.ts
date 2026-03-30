@@ -81,7 +81,7 @@ describe('LoginUseCase', () => {
       refreshToken: 'refresh-token',
       user: {
         id: userId,
-        userName: 'testuser',
+        username: 'testuser',
         displayName: 'Test User',
         email: emailStr,
         avatarUrl: 'https://example.com/avatar.png',

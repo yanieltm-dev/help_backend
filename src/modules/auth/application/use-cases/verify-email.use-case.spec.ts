@@ -83,7 +83,7 @@ describe('VerifyEmailUseCase', () => {
       refreshToken: 'refresh-token',
       user: {
         id: user.id,
-        userName: profile.username,
+        username: profile.username,
         displayName: profile.displayName,
         email: user.email.value,
         avatarUrl: profile.avatarUrl,

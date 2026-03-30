@@ -20,7 +20,7 @@ export class UpdateProfileDto {
     message:
       'Username can only contain letters, numbers, underscores and dots. It cannot start or end with a dot, or have consecutive dots.',
   })
-  userName?: string;
+  username?: string;
 
   @ApiPropertyOptional({ example: 'John de Doe' })
   @IsString()

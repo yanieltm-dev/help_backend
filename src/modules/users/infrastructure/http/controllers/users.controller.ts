@@ -60,7 +60,7 @@ export class UsersController {
   ): Promise<MeResponseDto> {
     await this.updateProfileUseCase.execute({
       userId: auth.userId,
-      username: dto.userName,
+      username: dto.username,
       displayName: dto.displayName,
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
       avatarUrl: dto.avatarUrl,

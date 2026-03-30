@@ -28,7 +28,7 @@ export interface VerifyEmailResponse {
   refreshToken: string;
   user: {
     id: string;
-    userName: string;
+    username: string;
     displayName: string;
     email: string;
     avatarUrl: string | null;

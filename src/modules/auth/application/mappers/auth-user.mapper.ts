@@ -3,7 +3,7 @@ import { User } from '@/modules/users/domain/entities/user.entity';
 
 export interface AuthUserResponse {
   id: string;
-  userName: string;
+  username: string;
   displayName: string;
   email: string;
   avatarUrl: string | null;
@@ -17,7 +17,7 @@ export function buildAuthUserResponse(
 ): AuthUserResponse {
   return {
     id: user.id,
-    userName: profile?.username || '',
+    username: profile?.username || '',
     displayName: profile?.displayName || '',
     email: user.email.value,
     avatarUrl: profile?.avatarUrl ?? null,

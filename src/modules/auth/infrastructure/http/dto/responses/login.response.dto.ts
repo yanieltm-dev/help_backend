@@ -14,7 +14,7 @@ class LoginUserResponseDto {
   emailVerified: boolean;
 
   @ApiProperty()
-  userName: string;
+  username: string;
 
   @ApiProperty()
   displayName: string;
