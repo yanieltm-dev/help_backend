@@ -45,6 +45,7 @@ import {
 import { LoginResponseDto } from '../dto/responses/login.response.dto';
 import { RegisterResponseDto } from '../dto/responses/register.response.dto';
 import { CookieService } from '../services/cookie.service';
+import { RequestService } from '../services/request.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -61,6 +62,7 @@ export class AuthController {
     private readonly changePasswordWithTokenUseCase: ChangePasswordWithTokenUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly cookieService: CookieService,
+    private readonly requestService: RequestService,
   ) {}
 
   @Post('register')
@@ -99,8 +101,8 @@ export class AuthController {
     const { accessToken, refreshToken, accessTokenExpiresAt, user } =
       await this.verifyEmailUseCase.execute({
         ...dto,
-        ipAddress: req.ip,
-        userAgent: this.cookieService.getUserAgent(req),
+        ipAddress: this.requestService.getIp(req),
+        userAgent: this.requestService.getUserAgent(req),
       });
 
     this.cookieService.setRefreshToken(res, refreshToken);
@@ -196,8 +198,8 @@ export class AuthController {
     const { accessToken, refreshToken, accessTokenExpiresAt, user } =
       await this.loginUseCase.execute({
         ...dto,
-        ipAddress: req.ip,
-        userAgent: this.cookieService.getUserAgent(req),
+        ipAddress: this.requestService.getIp(req),
+        userAgent: this.requestService.getUserAgent(req),
       });
 
     this.cookieService.setRefreshToken(res, refreshToken);
@@ -231,8 +233,8 @@ export class AuthController {
       refreshToken: newRefreshToken,
     } = await this.refreshSessionUseCase.execute({
       refreshToken,
-      ipAddress: req.ip,
-      userAgent: this.cookieService.getUserAgent(req),
+      ipAddress: this.requestService.getIp(req),
+      userAgent: this.requestService.getUserAgent(req),
     });
 
     this.cookieService.setRefreshToken(res, newRefreshToken);

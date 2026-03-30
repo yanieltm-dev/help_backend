@@ -36,9 +36,4 @@ export class CookieService {
     const value = (cookiesUnknown as Record<string, unknown>)['refresh_token'];
     return typeof value === 'string' ? value : undefined;
   }
-
-  getUserAgent(req: Request): string | undefined {
-    const header = req.headers['user-agent'];
-    return typeof header === 'string' ? header : undefined;
-  }
 }
