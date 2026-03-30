@@ -42,11 +42,12 @@ export interface MediaModuleConfig {
       provide: FileValidator,
       useFactory: (configService: ConfigService<AllConfigType>) =>
         new FileValidator({
-          maxFileSize:
-            configService.get('media.maxFileSize', { infer: true }) ?? 10485760,
-          allowedMimeTypes: configService.get('media.allowedMimeTypes', {
+          maxFileSize: configService.getOrThrow('media.maxFileSize', {
             infer: true,
-          }) ?? ['image/*', 'video/*', 'application/pdf'],
+          }),
+          allowedMimeTypes: configService.getOrThrow('media.allowedMimeTypes', {
+            infer: true,
+          }),
         }),
       inject: [ConfigService],
     },
@@ -163,9 +164,10 @@ export interface MediaModuleConfig {
         });
 
         return {
-          presignedUrlExpiry:
-            configService.get('media.presignedUrlExpiry', { infer: true }) ??
-            3600,
+          presignedUrlExpiry: configService.getOrThrow(
+            'media.presignedUrlExpiry',
+            { infer: true },
+          ),
           uploadStrategy:
             provider === PROVIDER.S3_PRESIGNED
               ? MEDIA_UPLOAD_STRATEGY.PRESIGNED
