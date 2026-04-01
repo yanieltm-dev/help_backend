@@ -5,6 +5,6 @@ import { DomainError } from '@/shared/domain/errors/domain.error';
  */
 export class InvalidUploadStrategyError extends DomainError {
   constructor(message: string) {
-    super(message);
+    super('INVALID_UPLOAD_STRATEGY', message);
   }
 }

@@ -2,6 +2,6 @@ import { DomainError } from '@/shared/domain/errors/domain.error';
 
 export class InvalidCurrentPasswordError extends DomainError {
   constructor() {
-    super('Current password is incorrect');
+    super('INVALID_CURRENT_PASSWORD', 'Current password is incorrect');
   }
 }

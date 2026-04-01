@@ -575,7 +575,7 @@ describe('AuthController (e2e)', () => {
           currentPassword: 'WrongPassword123!',
           newPassword: 'NewPassword123!',
         })
-        .expect(401);
+        .expect(400);
     });
 
     it('Scenario 3: Invalid new password returns 422', async () => {

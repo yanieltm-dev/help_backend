@@ -3,7 +3,8 @@ export type RegisterUserUseCaseConfig = {
 };
 import { Profile } from '@/modules/users/domain/entities/profile.entity';
 import { User } from '@/modules/users/domain/entities/user.entity';
-import { UserAlreadyExistsError } from '@/modules/users/domain/errors/user-already-exists.error';
+import { EmailAlreadyExistsError } from '@/modules/users/domain/errors/email-already-exists.error';
+import { UsernameAlreadyExistsError } from '@/modules/users/domain/errors/username-already-exists.error';
 import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
 import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
@@ -47,10 +48,10 @@ export class RegisterUserUseCase {
 
     // Business Validation
     const existingUser = await this.userRepo.findByEmail(email);
-    if (existingUser) throw new UserAlreadyExistsError('email');
+    if (existingUser) throw new EmailAlreadyExistsError();
 
     const existingProfile = await this.profileRepo.findByUsername(username);
-    if (existingProfile) throw new UserAlreadyExistsError('username');
+    if (existingProfile) throw new UsernameAlreadyExistsError();
 
     // Prepare Data
     Password.createRaw(password);

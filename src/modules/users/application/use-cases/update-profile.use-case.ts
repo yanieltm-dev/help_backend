@@ -3,7 +3,7 @@ import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import type { UserRepository } from '../../domain/ports/user.repository.port';
 import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
 import { Profile } from '../../domain/entities/profile.entity';
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
+import { UsernameAlreadyExistsError } from '../../domain/errors/username-already-exists.error';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 
 export interface UpdateProfileCommand {
@@ -34,7 +34,7 @@ export class UpdateProfileUseCase {
         command.username,
       );
       if (existingProfile && existingProfile.userId !== user.id) {
-        throw new UserAlreadyExistsError('username');
+        throw new UsernameAlreadyExistsError();
       }
     }
 

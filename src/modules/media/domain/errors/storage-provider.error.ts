@@ -5,6 +5,6 @@ export class StorageProviderError extends DomainError {
     message: string,
     public readonly provider: string,
   ) {
-    super(message);
+    super('STORAGE_PROVIDER_ERROR', message);
   }
 }

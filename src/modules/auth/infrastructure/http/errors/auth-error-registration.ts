@@ -64,8 +64,8 @@ export function registerAuthDomainErrors() {
   });
 
   DomainErrorMapperRegistry.register(InvalidCurrentPasswordError, {
-    status: HttpStatus.UNAUTHORIZED,
-    error: 'Unauthorized',
+    status: HttpStatus.BAD_REQUEST,
+    error: 'Bad Request',
   });
 
   DomainErrorMapperRegistry.register(InvalidNewPasswordError, {

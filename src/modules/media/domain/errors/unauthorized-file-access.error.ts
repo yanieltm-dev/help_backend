@@ -5,6 +5,9 @@ export class UnauthorizedFileAccessError extends DomainError {
     public readonly userId: string,
     public readonly fileId: string,
   ) {
-    super(`User "${userId}" is not authorized to access file "${fileId}"`);
+    super(
+      'UNAUTHORIZED_FILE_ACCESS',
+      `User "${userId}" is not authorized to access file "${fileId}"`,
+    );
   }
 }

@@ -6,7 +6,7 @@ import type { ProfileRepository } from '../../domain/ports/profile.repository.po
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.error';
+import { UsernameAlreadyExistsError } from '../../domain/errors/username-already-exists.error';
 
 jest.mock('@/shared/utils/uuid', () => ({
   generateUuidV7: jest.fn(() => '00000000-0000-0000-0000-000000000000'),
@@ -144,7 +144,7 @@ describe('UpdateProfileUseCase', () => {
         userId: 'user-id-1',
         username: 'takenusername',
       }),
-    ).rejects.toThrow(UserAlreadyExistsError);
+    ).rejects.toThrow(UsernameAlreadyExistsError);
   });
 
   it('should allow updating to same username', async () => {
