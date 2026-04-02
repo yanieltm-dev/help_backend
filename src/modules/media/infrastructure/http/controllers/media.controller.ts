@@ -39,6 +39,7 @@ export class MediaController {
     private readonly deleteFileUseCase: DeleteFileUseCase,
   ) {}
 
+  @Post('upload')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('file'))

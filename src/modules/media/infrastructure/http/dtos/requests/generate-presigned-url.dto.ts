@@ -4,7 +4,6 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
-  IsUUID,
   Max,
   Min,
 } from 'class-validator';
@@ -12,11 +11,6 @@ import {
 const MAX_SAFE_FILE_SIZE = 104857600;
 
 export class GeneratePresignedUrlDto {
-  @ApiProperty({ example: '019d10f2-0d3d-71f2-8358-ed329040b57f' })
-  @IsUUID()
-  @IsNotEmpty()
-  fileId!: string;
-
   @ApiProperty({ example: 'image/png' })
   @IsMimeType()
   @IsNotEmpty()

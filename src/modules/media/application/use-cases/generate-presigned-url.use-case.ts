@@ -11,7 +11,6 @@ import {
 } from '../../domain/types/media-upload-strategy';
 
 export interface GeneratePresignedUrlCommand {
-  fileId?: string;
   originalName: string;
   mimeType: string;
   size: number;
@@ -57,7 +56,7 @@ export class GeneratePresignedUrlUseCase {
       );
     }
 
-    const fileId = command.fileId || this.idGenerator.generate();
+    const fileId = this.idGenerator.generate();
     const key = this.fileKeyGenerator.execute({
       fileId,
       originalName: command.originalName,
