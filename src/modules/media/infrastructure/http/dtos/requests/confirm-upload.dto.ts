@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 
-const KEY_PATTERN = /^[a-zA-Z0-9/_-]+$/;
+const KEY_PATTERN = /^[a-zA-Z0-9/._-]+$/;
 
 export class ConfirmUploadDto {
   @ApiProperty({
