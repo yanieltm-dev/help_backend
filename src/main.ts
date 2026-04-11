@@ -16,6 +16,7 @@ import { join } from 'path';
 import { Logger } from 'pino-nestjs';
 import { AppModule } from './app.module';
 import { AllConfigType } from './core/config/config.type';
+import { formatValidationErrors } from './core/validation/validation-error-formatter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -69,31 +70,10 @@ async function bootstrap() {
       transform: true,
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       exceptionFactory: (errors: ValidationError[]) => {
-        const formatErrors = (
-          errors: ValidationError[],
-          parentProperty: string = '',
-        ) => {
-          return errors.reduce((acc: Record<string, string[]>, error) => {
-            const property = parentProperty
-              ? `${parentProperty}.${error.property}`
-              : error.property;
-
-            if (error.constraints) {
-              acc[property] = Object.values(error.constraints);
-            }
-
-            if (error.children && error.children.length > 0) {
-              Object.assign(acc, formatErrors(error.children, property));
-            }
-
-            return acc;
-          }, {});
-        };
-
         return new UnprocessableEntityException({
           statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
           message: 'Validation failed',
-          errors: formatErrors(errors),
+          errors: formatValidationErrors(errors),
         });
       },
     }),

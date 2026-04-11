@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { AppModule } from '@/app.module';
 import type { AllConfigType } from '@/core/config/config.type';
+import { formatValidationErrors } from '@/core/validation/validation-error-formatter';
 
 import { ensureDbAvailable, stubMailProviders } from './e2e-setup';
 
@@ -35,31 +36,10 @@ function createProductionValidationPipe(): ValidationPipe {
     transform: true,
     errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
     exceptionFactory: (errors: ValidationError[]) => {
-      const formatErrors = (
-        inputErrors: ValidationError[],
-        parentProperty: string = '',
-      ): Record<string, string[]> => {
-        return inputErrors.reduce(
-          (acc: Record<string, string[]>, error: ValidationError) => {
-            const property: string = parentProperty
-              ? `${parentProperty}.${error.property}`
-              : error.property;
-            if (error.constraints) {
-              acc[property] = Object.values(error.constraints);
-            }
-            if (error.children && error.children.length > 0) {
-              Object.assign(acc, formatErrors(error.children, property));
-            }
-            return acc;
-          },
-          {},
-        );
-      };
-
       return new UnprocessableEntityException({
         statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         message: 'Validation failed',
-        errors: formatErrors(errors),
+        errors: formatValidationErrors(errors),
       });
     },
   });

@@ -7,7 +7,10 @@ import { bootstrapE2eApp } from './utils/bootstrap-e2e-app';
 interface ApiResponse {
   message: string;
   userId?: string;
-  errors?: Record<string, string[]>;
+  errors?: Record<
+    string,
+    Array<{ message: string; meta?: Record<string, unknown> }>
+  >;
 }
 
 type LoginResponseBody = {
@@ -129,9 +132,14 @@ describe('AuthController (e2e)', () => {
           const birthDateErrors = body.errors?.birthDate;
           expect(birthDateErrors).toEqual(
             expect.arrayContaining([
-              expect.stringMatching(
-                /You must be at least \d+ years old to register/,
-              ),
+              expect.objectContaining({
+                message: expect.stringMatching(
+                  /You must be at least \d+ years old to register/,
+                ) as unknown as string,
+                meta: expect.objectContaining({
+                  minAge: expect.any(Number) as unknown as number,
+                }) as unknown as Record<string, unknown>,
+              }),
             ]),
           );
         });

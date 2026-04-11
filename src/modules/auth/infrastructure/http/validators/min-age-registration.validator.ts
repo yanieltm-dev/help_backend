@@ -1,6 +1,6 @@
+import { AllConfigType } from '@/core/config/config.type';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
 import {
   registerDecorator,
   ValidationOptions,
@@ -36,12 +36,28 @@ export class MinAgeRegistrationConstraint implements ValidatorConstraintInterfac
   }
 }
 
+function resolveMinAgeFromEnv(): number {
+  const rawMinAge = process.env.AUTH_MIN_AGE_REGISTER;
+  const parsedMinAge = Number.parseInt(rawMinAge ?? '13', 10);
+  return Number.isNaN(parsedMinAge) ? 13 : parsedMinAge;
+}
+
 export function MinAgeRegistration(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
+    const minAge = resolveMinAgeFromEnv();
+    const context =
+      (validationOptions?.context as Record<string, unknown>) ?? {};
+
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
-      options: validationOptions,
+      options: {
+        ...validationOptions,
+        context: {
+          ...context,
+          minAge,
+        },
+      },
       constraints: [],
       validator: MinAgeRegistrationConstraint,
     });
