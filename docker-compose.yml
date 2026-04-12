@@ -21,6 +21,8 @@ services:
     container_name: my-service-dev
     restart: unless-stopped
     env_file: .env
+    environment:
+      - DATABASE_HOST=postgres_db
     build:
       target: dev
       context: .
