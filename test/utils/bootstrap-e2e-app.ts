@@ -1,5 +1,3 @@
-import cookieParser from 'cookie-parser';
-import { useContainer } from 'class-validator';
 import {
   HttpStatus,
   INestApplication,
@@ -8,8 +6,11 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import { useContainer } from 'class-validator';
+import cookieParser from 'cookie-parser';
+import { Pool } from 'pg';
 
 import { AppModule } from '@/app.module';
 import type { AllConfigType } from '@/core/config/config.type';
@@ -26,7 +27,7 @@ type BootstrapE2eAppOptions = Readonly<{
 
 type BootstrapE2eAppResult = Readonly<{
   app: INestApplication;
-  dbAvailable: boolean;
+  pool: Pool;
 }>;
 
 function createProductionValidationPipe(): ValidationPipe {
@@ -68,7 +69,11 @@ export async function bootstrapE2eApp(
     validationMode: options.validationMode ?? 'default',
     useCookieParser: options.useCookieParser ?? false,
   };
-  const dbCheck = await ensureDbAvailable();
+
+  // 1. Ensure DB is up and get a pool
+  const pool = await ensureDbAvailable();
+
+  // 2. Create app
   const moduleFixture: TestingModule = await stubMailProviders(
     Test.createTestingModule({
       imports: [AppModule],
@@ -103,6 +108,6 @@ export async function bootstrapE2eApp(
 
   return {
     app,
-    dbAvailable: dbCheck.dbAvailable,
+    pool,
   };
 }

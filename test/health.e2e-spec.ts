@@ -1,46 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, VersioningType } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '@/app.module';
-import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
-import { App } from 'supertest/types';
+import { ApiClient, createApiClient } from './utils/api-client';
+import {
+  getApp,
+  initializeTestContext,
+  teardownTestContext,
+} from './utils/test-context';
 
 describe('HealthController (e2e)', () => {
-  let app: INestApplication;
+  let api: ApiClient;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-
-    const configService = app.get(ConfigService<AllConfigType>);
-    const apiPrefix = configService.getOrThrow('app.apiPrefix', {
-      infer: true,
-    });
-
-    app.setGlobalPrefix(apiPrefix);
-    app.enableVersioning({
-      type: VersioningType.URI,
-    });
-
-    await app.init();
+    await initializeTestContext();
+    api = createApiClient(getApp());
   });
 
   afterAll(async () => {
-    await app.close();
+    await teardownTestContext();
   });
 
-  it('/api/v1/health (GET)', () => {
-    return request(app.getHttpServer() as App)
-      .get('/api/v1/health')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toHaveProperty('status', 'ok');
-        expect(res.body).toHaveProperty('info');
-        expect(res.body).toHaveProperty('details');
-      });
+  it('/api/v1/health (GET)', async () => {
+    const res = await api.get('/health').expect(200);
+
+    expect(res.body).toHaveProperty('status', 'ok');
+    expect(res.body).toHaveProperty('info');
+    expect(res.body).toHaveProperty('details');
   });
 });
