@@ -1,37 +1,38 @@
-import { Provider } from '@nestjs/common';
-import type { UserRepository } from './domain/ports/user.repository.port';
-import type { AccountRepository } from './domain/ports/account.repository.port';
-import type { ProfileRepository } from './domain/ports/profile.repository.port';
-import type { VerificationRepository } from './domain/ports/verification.repository.port';
-import type { SessionRepository } from './domain/ports/session.repository.port';
-import type { PasswordHasher } from './application/ports/password-hasher.port';
-import type { Authenticator } from './application/ports/authenticator.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
-import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
-import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
-import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
-import { LoginUseCase } from './application/use-cases/login.use-case';
-import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
-import { LogoutUseCase } from './application/use-cases/logout.use-case';
-import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
-import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
-import { GetMeUseCase } from './application/use-cases/get-me.use-case';
-import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
-import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/core/config/config.type';
+import { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
+import {
+  PROFILE_REPOSITORY,
+  USER_REPOSITORY,
+} from '@/modules/users/users.tokens';
+import { IEventBus } from '@/shared/domain/ports/event-bus.port';
+import { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
+import { EVENT_BUS, ID_GENERATOR, UNIT_OF_WORK } from '@/shared/shared.tokens';
+import { Provider } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Authenticator } from './application/ports/authenticator.port';
+import type { PasswordHasher } from './application/ports/password-hasher.port';
+import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token.use-case';
+import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { LogoutUseCase } from './application/use-cases/logout.use-case';
+import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
+import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
+import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset.use-case';
+import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
+import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+import { VerifyPasswordResetOtpUseCase } from './application/use-cases/verify-password-reset-otp.use-case';
 import {
   ACCOUNT_REPOSITORY,
-  EVENT_BUS,
-  PASSWORD_HASHER,
-  PROFILE_REPOSITORY,
-  SESSION_REPOSITORY,
   AUTHENTICATOR,
-  USER_REPOSITORY,
+  PASSWORD_HASHER,
+  SESSION_REPOSITORY,
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
-import { UNIT_OF_WORK, ID_GENERATOR } from '@/shared/shared.tokens';
+import { AccountRepository } from './domain/ports/account.repository.port';
+import { SessionRepository } from './domain/ports/session.repository.port';
+import { VerificationRepository } from './domain/ports/verification.repository.port';
 
 export const authUseCaseProviders: Provider[] = [
   {
@@ -79,6 +80,7 @@ export const authUseCaseProviders: Provider[] = [
     provide: RequestPasswordResetUseCase,
     inject: [
       USER_REPOSITORY,
+      PROFILE_REPOSITORY,
       VERIFICATION_REPOSITORY,
       PASSWORD_HASHER,
       EVENT_BUS,
@@ -87,6 +89,7 @@ export const authUseCaseProviders: Provider[] = [
     ],
     useFactory: (
       userRepo: UserRepository,
+      profileRepo: ProfileRepository,
       verificationRepo: VerificationRepository,
       hasher: PasswordHasher,
       eventBus: IEventBus,
@@ -95,6 +98,7 @@ export const authUseCaseProviders: Provider[] = [
     ) => {
       return new RequestPasswordResetUseCase(
         userRepo,
+        profileRepo,
         verificationRepo,
         hasher,
         eventBus,
@@ -103,10 +107,44 @@ export const authUseCaseProviders: Provider[] = [
           otpExpiresInMs: configService.getOrThrow('auth.otpExpiresInMs', {
             infer: true,
           }),
-          maxRequests: configService.getOrThrow('auth.maxFailedAttempts', {
-            infer: true,
-          }),
-          windowMs: configService.getOrThrow('auth.lockoutDurationMs', {
+          maxRequests: configService.getOrThrow(
+            'auth.passwordResetRequestMaxRequests',
+            { infer: true },
+          ),
+          windowMs: configService.getOrThrow(
+            'auth.passwordResetRequestWindowMs',
+            {
+              infer: true,
+            },
+          ),
+        },
+      );
+    },
+  },
+  {
+    provide: VerifyPasswordResetOtpUseCase,
+    inject: [
+      VERIFICATION_REPOSITORY,
+      PASSWORD_HASHER,
+      ID_GENERATOR,
+      ConfigService,
+    ],
+    useFactory: (
+      verificationRepo: VerificationRepository,
+      hasher: PasswordHasher,
+      idGenerator: IIdGenerator,
+      configService: ConfigService<AllConfigType>,
+    ) => {
+      return new VerifyPasswordResetOtpUseCase(
+        verificationRepo,
+        hasher,
+        idGenerator,
+        {
+          changePasswordTokenExpiresInMs: configService.getOrThrow(
+            'auth.changePasswordTokenExpiresInMs',
+            { infer: true },
+          ),
+          otpMaxAttempts: configService.getOrThrow('auth.otpMaxAttempts', {
             infer: true,
           }),
         },
@@ -114,7 +152,7 @@ export const authUseCaseProviders: Provider[] = [
     },
   },
   {
-    provide: ResetPasswordUseCase,
+    provide: ChangePasswordWithTokenUseCase,
     inject: [
       VERIFICATION_REPOSITORY,
       USER_REPOSITORY,
@@ -131,7 +169,7 @@ export const authUseCaseProviders: Provider[] = [
       hasher: PasswordHasher,
       uow: IUnitOfWork,
     ) => {
-      return new ResetPasswordUseCase(
+      return new ChangePasswordWithTokenUseCase(
         verificationRepo,
         userRepo,
         accountRepo,
@@ -181,6 +219,9 @@ export const authUseCaseProviders: Provider[] = [
               infer: true,
             },
           ),
+          otpMaxAttempts: configService.getOrThrow('auth.otpMaxAttempts', {
+            infer: true,
+          }),
         },
       );
     },
@@ -189,6 +230,7 @@ export const authUseCaseProviders: Provider[] = [
     provide: ResendVerificationUseCase,
     inject: [
       USER_REPOSITORY,
+      PROFILE_REPOSITORY,
       VERIFICATION_REPOSITORY,
       PASSWORD_HASHER,
       EVENT_BUS,
@@ -197,6 +239,7 @@ export const authUseCaseProviders: Provider[] = [
     ],
     useFactory: (
       userRepo: UserRepository,
+      profileRepo: ProfileRepository,
       verificationRepo: VerificationRepository,
       hasher: PasswordHasher,
       eventBus: IEventBus,
@@ -205,6 +248,7 @@ export const authUseCaseProviders: Provider[] = [
     ) => {
       return new ResendVerificationUseCase(
         userRepo,
+        profileRepo,
         verificationRepo,
         hasher,
         eventBus,
@@ -213,6 +257,18 @@ export const authUseCaseProviders: Provider[] = [
           otpExpiresInMs: configService.getOrThrow('auth.otpExpiresInMs', {
             infer: true,
           }),
+          maxRequests: configService.getOrThrow(
+            'auth.resendVerificationMaxRequests',
+            {
+              infer: true,
+            },
+          ),
+          windowMs: configService.getOrThrow(
+            'auth.resendVerificationWindowMs',
+            {
+              infer: true,
+            },
+          ),
         },
       );
     },
@@ -227,6 +283,7 @@ export const authUseCaseProviders: Provider[] = [
       AUTHENTICATOR,
       SESSION_REPOSITORY,
       ID_GENERATOR,
+      UNIT_OF_WORK,
       ConfigService,
     ],
     useFactory: (
@@ -237,6 +294,7 @@ export const authUseCaseProviders: Provider[] = [
       authenticator: Authenticator,
       sessionRepo: SessionRepository,
       idGenerator: IIdGenerator,
+      uow: IUnitOfWork,
       configService: ConfigService<AllConfigType>,
     ) => {
       return new LoginUseCase(
@@ -261,19 +319,19 @@ export const authUseCaseProviders: Provider[] = [
             { infer: true },
           ),
         },
+        uow,
       );
     },
   },
   {
     provide: RefreshSessionUseCase,
-    inject: [SESSION_REPOSITORY, USER_REPOSITORY, AUTHENTICATOR, ConfigService],
+    inject: [SESSION_REPOSITORY, AUTHENTICATOR, ConfigService],
     useFactory: (
       sessionRepo: SessionRepository,
-      userRepo: UserRepository,
       authenticator: Authenticator,
       configService: ConfigService<AllConfigType>,
     ) =>
-      new RefreshSessionUseCase(sessionRepo, userRepo, authenticator, {
+      new RefreshSessionUseCase(sessionRepo, authenticator, {
         sessionExpiresInMs: configService.getOrThrow(
           'auth.sessionExpiresInMs',
           { infer: true },
@@ -285,13 +343,6 @@ export const authUseCaseProviders: Provider[] = [
     inject: [SESSION_REPOSITORY],
     useFactory: (sessionRepo: SessionRepository) => {
       return new LogoutUseCase(sessionRepo);
-    },
-  },
-  {
-    provide: GetMeUseCase,
-    inject: [USER_REPOSITORY, PROFILE_REPOSITORY],
-    useFactory: (userRepo: UserRepository, profileRepo: ProfileRepository) => {
-      return new GetMeUseCase(userRepo, profileRepo);
     },
   },
   {

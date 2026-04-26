@@ -1,7 +1,18 @@
+import { ChangePasswordWithTokenUseCase } from '@/modules/auth/application/use-cases/change-password-with-token.use-case';
+import { ChangePasswordUseCase } from '@/modules/auth/application/use-cases/change-password.use-case';
+import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
+import { LogoutUseCase } from '@/modules/auth/application/use-cases/logout.use-case';
+import { RefreshSessionUseCase } from '@/modules/auth/application/use-cases/refresh-session.use-case';
+import { RegisterUserUseCase } from '@/modules/auth/application/use-cases/register-user.use-case';
+import { RequestPasswordResetUseCase } from '@/modules/auth/application/use-cases/request-password-reset.use-case';
+import { ResendVerificationUseCase } from '@/modules/auth/application/use-cases/resend-verification.use-case';
+import { VerifyEmailUseCase } from '@/modules/auth/application/use-cases/verify-email.use-case';
+import { VerifyPasswordResetOtpUseCase } from '@/modules/auth/application/use-cases/verify-password-reset-otp.use-case';
+import { InvalidRefreshTokenError } from '@/modules/auth/domain/errors/invalid-refresh-token.error';
+import { CurrentAuth, JwtAuthGuard } from '@/shared/auth';
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -11,54 +22,30 @@ import {
   UseGuards,
   Version,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
-import { RegisterUserUseCase } from '../../../application/use-cases/register-user.use-case';
-import { VerifyEmailUseCase } from '../../../application/use-cases/verify-email.use-case';
-import { ResendVerificationUseCase } from '../../../application/use-cases/resend-verification.use-case';
-import { LoginUseCase } from '../../../application/use-cases/login.use-case';
-import { RefreshSessionUseCase } from '../../../application/use-cases/refresh-session.use-case';
-import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
-import { RequestPasswordResetUseCase } from '../../../application/use-cases/request-password-reset.use-case';
-import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password.use-case';
-import { GetMeUseCase } from '../../../application/use-cases/get-me.use-case';
-import { ChangePasswordUseCase } from '../../../application/use-cases/change-password.use-case';
-import { InvalidRefreshTokenError } from '../../../domain/errors/invalid-refresh-token.error';
-import { RegisterDto } from '../dto/register.dto';
-import { VerifyEmailDto, ResendVerificationDto } from '../dto/verification.dto';
-import { LoginDto } from '../dto/login.dto';
-import {
-  RequestPasswordResetDto,
-  ResetPasswordDto,
-} from '../dto/password-reset.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RegisterResponseDto } from '../responses/register.response';
-import { LoginResponseDto } from '../responses/login.response';
-import { MeResponseDto } from '../responses/me.response';
-import { JwtAuthGuard } from '../../security/guards/jwt-auth.guard';
-import { CurrentAuth } from '../decorators/current-auth.decorator';
+import type { Request, Response } from 'express';
 import type { AuthenticatedRequestUser } from '../../security/jwt.strategy';
-import { ChangePasswordDto } from '../dto/change-password.dto';
-
-function getCookie(req: Request, name: string): string | undefined {
-  const cookiesUnknown: unknown = (req as Request & { cookies?: unknown })
-    .cookies;
-  if (!cookiesUnknown || typeof cookiesUnknown !== 'object') return undefined;
-  const value = (cookiesUnknown as Record<string, unknown>)[name];
-  return typeof value === 'string' ? value : undefined;
-}
-
-function getUserAgent(req: Request): string | undefined {
-  const header = req.headers['user-agent'];
-  if (typeof header === 'string') return header;
-  return undefined;
-}
+import { ChangePasswordDto } from '../dto/requests/change-password.dto';
+import { LoginDto } from '../dto/requests/login.dto';
+import {
+  ChangePasswordWithTokenDto,
+  RequestPasswordResetDto,
+  VerifyPasswordResetOtpDto,
+} from '../dto/requests/password-reset.dto';
+import { RegisterDto } from '../dto/requests/register.dto';
+import {
+  ResendVerificationDto,
+  VerifyEmailDto,
+} from '../dto/requests/verification.dto';
+import { LoginResponseDto } from '../dto/responses/login.response.dto';
+import { RegisterResponseDto } from '../dto/responses/register.response.dto';
+import { CookieService } from '../services/cookie.service';
+import { RequestService } from '../services/request.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -71,10 +58,11 @@ export class AuthController {
     private readonly refreshSessionUseCase: RefreshSessionUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase,
-    private readonly getMeUseCase: GetMeUseCase,
+    private readonly verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
+    private readonly changePasswordWithTokenUseCase: ChangePasswordWithTokenUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
-    private readonly configService: ConfigService<AllConfigType>,
+    private readonly cookieService: CookieService,
+    private readonly requestService: RequestService,
   ) {}
 
   @Post('register')
@@ -113,18 +101,11 @@ export class AuthController {
     const { accessToken, refreshToken, accessTokenExpiresAt, user } =
       await this.verifyEmailUseCase.execute({
         ...dto,
-        ipAddress: req.ip,
-        userAgent: getUserAgent(req),
+        ipAddress: this.requestService.getIp(req),
+        userAgent: this.requestService.getUserAgent(req),
       });
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, refreshToken);
 
     return {
       accessToken,
@@ -166,19 +147,36 @@ export class AuthController {
     };
   }
 
-  @Post('reset-password')
+  @Post('verify-password-reset-otp')
   @Version('1')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password with OTP' })
-  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  @ApiOperation({ summary: 'Verify password reset OTP and get change token' })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP verified, returns changePasswordToken',
+  })
   @ApiResponse({
     status: 400,
     description: 'Invalid, expired, or max attempts exceeded for OTP',
   })
   @ApiResponse({ status: 422, description: 'Validation failed' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.resetPasswordUseCase.execute(dto);
-    return { message: 'Password reset successfully' };
+  async verifyPasswordResetOtp(@Body() dto: VerifyPasswordResetOtpDto) {
+    return this.verifyPasswordResetOtpUseCase.execute(dto);
+  }
+
+  @Post('change-password-with-token')
+  @Version('1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change password with changePasswordToken' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired change password token',
+  })
+  @ApiResponse({ status: 422, description: 'Validation failed' })
+  async changePasswordWithToken(@Body() dto: ChangePasswordWithTokenDto) {
+    await this.changePasswordWithTokenUseCase.execute(dto);
+    return { message: 'Password changed successfully' };
   }
 
   @Post('login')
@@ -200,18 +198,11 @@ export class AuthController {
     const { accessToken, refreshToken, accessTokenExpiresAt, user } =
       await this.loginUseCase.execute({
         ...dto,
-        ipAddress: req.ip,
-        userAgent: getUserAgent(req),
+        ipAddress: this.requestService.getIp(req),
+        userAgent: this.requestService.getUserAgent(req),
       });
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: true, // Should be true in production, assuming HTTPS
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, refreshToken);
 
     return {
       accessToken,
@@ -230,7 +221,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
-    const refreshToken = getCookie(req, 'refresh_token');
+    const refreshToken = this.cookieService.getRefreshToken(req);
 
     if (!refreshToken) {
       throw new InvalidRefreshTokenError();
@@ -242,18 +233,11 @@ export class AuthController {
       refreshToken: newRefreshToken,
     } = await this.refreshSessionUseCase.execute({
       refreshToken,
-      ipAddress: req.ip,
-      userAgent: getUserAgent(req),
+      ipAddress: this.requestService.getIp(req),
+      userAgent: this.requestService.getUserAgent(req),
     });
 
-    res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: this.configService.getOrThrow('auth.sessionExpiresInMs', {
-        infer: true,
-      }),
-    });
+    this.cookieService.setRefreshToken(res, newRefreshToken);
 
     return {
       accessToken,
@@ -270,33 +254,15 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const refreshToken = getCookie(req, 'refresh_token');
+    const refreshToken = this.cookieService.getRefreshToken(req);
 
     await this.logoutUseCase.execute({
       refreshToken: refreshToken ?? '',
     });
 
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-    });
+    this.cookieService.clearRefreshToken(res);
 
     return { message: 'Logged out' };
-  }
-
-  @Get('me')
-  @Version('1')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current authenticated user' })
-  @ApiResponse({ status: 200, type: MeResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async me(
-    @CurrentAuth() auth: AuthenticatedRequestUser,
-  ): Promise<MeResponseDto> {
-    return this.getMeUseCase.execute({ userId: auth.userId });
   }
 
   @Patch('change-password')
@@ -313,7 +279,7 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Req() req: Request,
   ): Promise<{ message: string }> {
-    const refreshToken = getCookie(req, 'refresh_token') ?? '';
+    const refreshToken = this.cookieService.getRefreshToken(req) ?? '';
     await this.changePasswordUseCase.execute({
       userId: auth.userId,
       currentPassword: dto.currentPassword,

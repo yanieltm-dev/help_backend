@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto';
+
 /**
  * Value Object for One Time Password (OTP).
  * Encapsulates OTP logic for verification.
@@ -6,10 +8,10 @@ export class Otp {
   private constructor(public readonly value: string) {}
 
   /**
-   * Generates a random 6-digit OTP string.
+   * Generates a cryptographically secure 6-digit OTP string.
    */
   static generate(): Otp {
-    const value = Math.floor(100000 + Math.random() * 900000).toString();
+    const value = randomInt(100000, 999999).toString();
     return new Otp(value);
   }
 

@@ -1,14 +1,16 @@
 import { Account } from '@/modules/auth/domain/entities/account.entity';
-import { Profile } from '@/modules/auth/domain/entities/profile.entity';
+import { Profile } from '@/modules/users/domain/entities/profile.entity';
 import { Session } from '@/modules/auth/domain/entities/session.entity';
-import { User } from '@/modules/auth/domain/entities/user.entity';
-import { VerificationToken } from '@/modules/auth/domain/entities/verification-token.entity';
+import { User } from '@/modules/users/domain/entities/user.entity';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '@/modules/auth/domain/entities/verification-token.entity';
 import { Password } from '@/modules/auth/domain/value-objects/password.vo';
 
 type CreateUserOverrides = Readonly<{
   id?: string;
   email?: string;
-  name?: string;
   isEmailVerified?: boolean;
 }>;
 
@@ -16,7 +18,7 @@ type CreateProfileOverrides = Readonly<{
   id?: string;
   userId: string;
   username?: string;
-  name?: string;
+  displayName?: string;
   avatarUrl?: string;
   birthDate?: Date;
 }>;
@@ -32,7 +34,7 @@ type CreateVerificationTokenOverrides = Readonly<{
   id?: string;
   identifier: string;
   hashedToken?: string;
-  type: 'email_verification' | 'password_reset';
+  type: VerificationTokenType;
   expiresInMs?: number;
 }>;
 
@@ -59,14 +61,13 @@ export const AuthEntitiesTestFactory: AuthEntitiesTestFactoryType = {
   createUser: (overrides: CreateUserOverrides = {}): User => {
     const id: string = overrides.id ?? 'user-id';
     const email: string = overrides.email ?? 'user@example.com';
-    const name: string = overrides.name ?? 'Test User';
     const isEmailVerified: boolean = overrides.isEmailVerified ?? true;
-    return User.create(id, email, name, isEmailVerified);
+    return User.create(id, email, isEmailVerified);
   },
   createProfile: (overrides: CreateProfileOverrides): Profile => {
     const id: string = overrides.id ?? 'profile-id';
     const username: string = overrides.username ?? 'testuser';
-    const name: string = overrides.name ?? 'Test User';
+    const displayName: string = overrides.displayName ?? 'Test User';
     const avatarUrl: string =
       overrides.avatarUrl ?? 'https://example.com/avatar.png';
     const birthDate: Date = overrides.birthDate ?? new Date('2000-01-01');
@@ -74,7 +75,7 @@ export const AuthEntitiesTestFactory: AuthEntitiesTestFactoryType = {
       id,
       overrides.userId,
       username,
-      name,
+      displayName,
       avatarUrl,
       birthDate,
     );

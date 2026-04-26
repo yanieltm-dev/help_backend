@@ -1,10 +1,10 @@
-import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
-import type { ProfileRepository } from '@/modules/auth/domain/ports/profile.repository.port';
-import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
-import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
+import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
+import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
@@ -29,7 +29,6 @@ export const AuthUseCaseTestKit: AuthUseCaseTestKitType = {
     ({
       findByEmail: jest.fn(),
       findById: jest.fn(),
-      findByUsername: jest.fn(),
       save: jest.fn(),
     }) as unknown as jest.Mocked<UserRepository>,
   createAccountRepositoryMock: (): jest.Mocked<AccountRepository> =>
@@ -45,19 +44,20 @@ export const AuthUseCaseTestKit: AuthUseCaseTestKitType = {
     }) as unknown as jest.Mocked<ProfileRepository>,
   createVerificationRepositoryMock: (): jest.Mocked<VerificationRepository> =>
     ({
-      findByIdentifierAndType: jest.fn(),
       countRecentForIdentifierAndTypeSince: jest.fn(),
+      delete: jest.fn(),
+      findByIdAndType: jest.fn(),
+      findByIdentifierAndType: jest.fn(),
       invalidateAllForIdentifier: jest.fn(),
       save: jest.fn(),
-      delete: jest.fn(),
     }) as unknown as jest.Mocked<VerificationRepository>,
   createSessionRepositoryMock: (): jest.Mocked<SessionRepository> =>
     ({
-      save: jest.fn(),
-      findByToken: jest.fn(),
       deleteByToken: jest.fn(),
       deleteByUserId: jest.fn(),
       deleteByUserIdExceptToken: jest.fn(),
+      findByToken: jest.fn(),
+      save: jest.fn(),
     }) as unknown as jest.Mocked<SessionRepository>,
   createPasswordHasherMock: (): jest.Mocked<PasswordHasher> =>
     ({

@@ -1,11 +1,13 @@
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
 import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
-import type { ProfileRepository } from '@/modules/auth/domain/ports/profile.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
 import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
 
 type IdGeneratorMock = Readonly<{ generate: jest.Mock }>;
@@ -19,6 +21,7 @@ type CreateLoginUseCaseSutOverrides = Partial<
     authenticator: jest.Mocked<Authenticator>;
     sessionRepo: jest.Mocked<SessionRepository>;
     idGenerator: IdGeneratorMock;
+    uow: jest.Mocked<IUnitOfWork>;
   }>
 >;
 
@@ -49,6 +52,8 @@ export function createLoginUseCaseSut(
   const defaultIdGenerator: IdGeneratorMock = {
     generate: jest.fn().mockReturnValue('mocked-uuid'),
   };
+  const defaultUow: jest.Mocked<IUnitOfWork> =
+    AuthUseCaseTestKit.createUnitOfWorkMock();
   const resolvedUserRepo: jest.Mocked<UserRepository> =
     overrides.userRepo ?? defaultUserRepo;
   const resolvedAccountRepo: jest.Mocked<AccountRepository> =
@@ -63,6 +68,7 @@ export function createLoginUseCaseSut(
     overrides.sessionRepo ?? defaultSessionRepo;
   const resolvedIdGenerator: IdGeneratorMock =
     overrides.idGenerator ?? defaultIdGenerator;
+  const resolvedUow: jest.Mocked<IUnitOfWork> = overrides.uow ?? defaultUow;
   return {
     useCase: new LoginUseCase(
       resolvedUserRepo,
@@ -74,9 +80,10 @@ export function createLoginUseCaseSut(
       resolvedIdGenerator,
       {
         maxFailedAttempts: 5,
-        lockoutDurationMs: 900000,
-        sessionExpiresInMs: 3600000,
+        lockoutDurationMs: parseDuration('15m'),
+        sessionExpiresInMs: parseDuration('1h'),
       },
+      resolvedUow,
     ),
     userRepo: resolvedUserRepo,
     accountRepo: resolvedAccountRepo,

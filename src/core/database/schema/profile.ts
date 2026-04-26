@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './user';
 
 export const profile = pgTable('profile', {
@@ -7,7 +7,7 @@ export const profile = pgTable('profile', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  displayName: text('display_name'),
+  displayName: text('display_name').notNull(),
   username: text('username').notNull().unique(),
   bio: text('bio'),
   avatarUrl: text('avatar_url'),

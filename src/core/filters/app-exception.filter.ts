@@ -24,6 +24,7 @@ export class AppExceptionFilter implements ExceptionFilter {
         statusCode: status,
         message: exception.message,
         error: mapping?.error ?? 'Domain Error',
+        code: exception.code,
       });
     }
 

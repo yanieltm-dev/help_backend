@@ -77,7 +77,6 @@ describe('ResendMailTransport', () => {
       }),
     ).rejects.toThrow('Mail provider not configured');
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(logger.error).toHaveBeenCalledWith(
       'Resend SDK is not initialized (missing API key)',
     );

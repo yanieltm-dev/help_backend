@@ -1,40 +1,38 @@
+import { AllConfigType } from '@/core/config/config.type';
+import { UsersModule } from '@/modules/users/users.module';
+import { SharedModule } from '@/shared/shared.module';
 import { Module } from '@nestjs/common';
-import { AuthController } from './infrastructure/http/controllers/auth.controller';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { authUseCaseProviders } from './auth-use-cases.providers';
-import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
-import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
-import { PasswordResetRequestedListener } from './infrastructure/listeners/password-reset-requested.listener';
-import { DrizzleUserRepository } from './infrastructure/persistence/repositories/drizzle-user.repository';
-import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
-import { DrizzleProfileRepository } from './infrastructure/persistence/repositories/drizzle-profile.repository';
-import { DrizzleVerificationRepository } from './infrastructure/persistence/repositories/drizzle-verification.repository';
-import { DrizzleSessionRepository } from './infrastructure/persistence/repositories/drizzle-session.repository';
-import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
-import { JwtAuthenticator } from './infrastructure/security/jwt-authenticator';
 import {
   ACCOUNT_REPOSITORY,
-  EVENT_BUS,
-  PASSWORD_HASHER,
-  PROFILE_REPOSITORY,
-  SESSION_REPOSITORY,
   AUTHENTICATOR,
-  USER_REPOSITORY,
+  PASSWORD_HASHER,
+  SESSION_REPOSITORY,
   VERIFICATION_REPOSITORY,
 } from './auth.tokens';
-import { NestEventBusAdapter } from '@/shared/infrastructure/events/nest-event-bus.adapter';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@/core/config/config.type';
+import { AuthController } from './infrastructure/http/controllers/auth.controller';
+import { CookieService } from './infrastructure/http/services/cookie.service';
+import { RequestService } from './infrastructure/http/services/request.service';
 import { registerAuthDomainErrors } from './infrastructure/http/errors/auth-error-registration';
-import { UNIT_OF_WORK, ID_GENERATOR } from '@/shared/shared.tokens';
-import { DrizzleUnitOfWork } from '@/shared/infrastructure/persistence/drizzle-unit-of-work.adapter';
-import { UuidV7Generator } from '@/shared/infrastructure/services/uuid-v7-generator.adapter';
-import { PassportModule } from '@nestjs/passport';
+import { MinAgeRegistrationConstraint } from './infrastructure/http/validators/min-age-registration.validator';
+import { PasswordResetRequestedListener } from './infrastructure/listeners/password-reset-requested.listener';
+import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
+import { VerificationResendedListener } from './infrastructure/listeners/verification-resended.listener';
+import { DrizzleAccountRepository } from './infrastructure/persistence/repositories/drizzle-account.repository';
+import { DrizzleSessionRepository } from './infrastructure/persistence/repositories/drizzle-session.repository';
+import { DrizzleVerificationRepository } from './infrastructure/persistence/repositories/drizzle-verification.repository';
+import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
+import { JwtAuthenticator } from './infrastructure/security/jwt-authenticator';
 import { JwtStrategy } from './infrastructure/security/jwt.strategy';
 
 @Module({
   imports: [
+    SharedModule,
     PassportModule,
+    UsersModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -51,13 +49,14 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
   controllers: [AuthController],
   providers: [
     ...authUseCaseProviders,
+    CookieService,
+    RequestService,
+    MinAgeRegistrationConstraint,
     UserRegisteredListener,
     VerificationResendedListener,
     PasswordResetRequestedListener,
     JwtStrategy,
-    { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
-    { provide: PROFILE_REPOSITORY, useClass: DrizzleProfileRepository },
     {
       provide: VERIFICATION_REPOSITORY,
       useClass: DrizzleVerificationRepository,
@@ -65,10 +64,8 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
     { provide: AUTHENTICATOR, useClass: JwtAuthenticator },
     { provide: SESSION_REPOSITORY, useClass: DrizzleSessionRepository },
-    { provide: EVENT_BUS, useClass: NestEventBusAdapter },
-    { provide: UNIT_OF_WORK, useClass: DrizzleUnitOfWork },
-    { provide: ID_GENERATOR, useClass: UuidV7Generator },
   ],
+  exports: [ACCOUNT_REPOSITORY, SESSION_REPOSITORY, VERIFICATION_REPOSITORY],
 })
 export class AuthModule {
   constructor() {

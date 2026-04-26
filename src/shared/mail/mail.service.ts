@@ -38,7 +38,19 @@ export class MailService implements IMailService {
     name: string,
     otpExpiresInMs: number,
   ): Promise<void> {
-    this.logger.info({ to }, '[MAIL] Sending verification email');
+    const environment = this.configService.getOrThrow('app.nodeEnv', {
+      infer: true,
+    });
+    // log otp code if environment is development
+    if (environment === 'development') {
+      this.logger.info(
+        { to, otp },
+        `[MAIL] Sending verification email with otp code: ${otp} to ${to}`,
+      );
+    } else {
+      this.logger.info({ to }, '[MAIL] Sending verification email');
+    }
+
     const { appName, logoUrl } = this.getTemplateContext();
     const html = buildVerificationOtpHtml({
       name,
@@ -61,7 +73,19 @@ export class MailService implements IMailService {
     name: string,
     otpExpiresInMs: number,
   ): Promise<void> {
-    this.logger.info({ to }, '[MAIL] Sending password reset email');
+    const environment = this.configService.getOrThrow('app.nodeEnv', {
+      infer: true,
+    });
+    // log otp code if environment is development
+    if (environment === 'development') {
+      this.logger.info(
+        { to, otp },
+        `[MAIL] Sending password reset email with otp code: ${otp} to ${to}`,
+      );
+    } else {
+      this.logger.info({ to }, '[MAIL] Sending password reset email');
+    }
+
     const { appName, logoUrl } = this.getTemplateContext();
     const html = buildPasswordResetOtpHtml({
       name,

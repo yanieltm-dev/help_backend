@@ -1,17 +1,19 @@
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
-import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import type { Authenticator } from '../ports/authenticator.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
+import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
+import { Session } from '../../domain/entities/session.entity';
+import { VerificationTokenType } from '../../domain/entities/verification-token.entity';
 import {
-  InvalidOtpError,
   ExpiredOtpError,
+  InvalidOtpError,
   MaxAttemptsExceededError,
 } from '../../domain/errors/otp.errors';
-import { Session } from '../../domain/entities/session.entity';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import { buildAuthUserResponse } from '../mappers/auth-user.mapper';
+import type { Authenticator } from '../ports/authenticator.port';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface VerifyEmailCommand {
   email: string;
@@ -26,20 +28,20 @@ export interface VerifyEmailResponse {
   refreshToken: string;
   user: {
     id: string;
-    name: string;
+    username: string;
+    displayName: string;
     email: string;
-    image: string | null;
+    avatarUrl: string | null;
     emailVerified: boolean;
   };
 }
 
 export type VerifyEmailUseCaseConfig = {
   sessionExpiresInMs: number;
+  otpMaxAttempts: number;
 };
 
 export class VerifyEmailUseCase {
-  private readonly MAX_ATTEMPTS = 5;
-
   constructor(
     private readonly userRepo: UserRepository,
     private readonly verificationRepo: VerificationRepository,
@@ -80,19 +82,13 @@ export class VerifyEmailUseCase {
         accessToken,
         refreshToken,
         accessTokenExpiresAt,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email.value,
-          image: profile?.avatarUrl ?? null,
-          emailVerified: true,
-        },
+        user: buildAuthUserResponse(user, profile, true),
       };
     }
 
     const verification = await this.verificationRepo.findByIdentifierAndType(
       email,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
     );
 
     if (!verification) {
@@ -103,7 +99,7 @@ export class VerifyEmailUseCase {
       throw new ExpiredOtpError();
     }
 
-    if (verification.hasExceededMaxAttempts(this.MAX_ATTEMPTS)) {
+    if (verification.hasExceededMaxAttempts(this.config.otpMaxAttempts)) {
       throw new MaxAttemptsExceededError();
     }
 
@@ -142,13 +138,7 @@ export class VerifyEmailUseCase {
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email.value,
-        image: profile?.avatarUrl ?? null,
-        emailVerified: true,
-      },
+      user: buildAuthUserResponse(user, profile, true),
     };
   }
 }

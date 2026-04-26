@@ -1,7 +1,3 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import { AppModule } from './app.module';
 import {
   HttpStatus,
   UnprocessableEntityException,
@@ -10,11 +6,17 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from './core/config/config.type';
-import { Logger } from 'pino-nestjs';
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { join } from 'path';
+import { Logger } from 'pino-nestjs';
+import { AppModule } from './app.module';
+import { AllConfigType } from './core/config/config.type';
+import { formatValidationErrors } from './core/validation/validation-error-formatter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -26,13 +28,30 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService<AllConfigType>);
 
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   app.setGlobalPrefix(
     configService.getOrThrow('app.apiPrefix', { infer: true }),
   );
 
+  app.enableCors({
+    origin: configService.getOrThrow('app.allowedOrigins', { infer: true }),
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  });
+
   app.useStaticAssets(join(process.cwd(), 'assets'), { prefix: '/assets' });
 
+  const mediaConfig = configService.get('media', { infer: true });
+  if (mediaConfig?.provider === 'local') {
+    app.useStaticAssets(join(process.cwd(), mediaConfig.localPath), {
+      prefix: '/uploads',
+    });
+  }
+
   app.use(helmet());
+
   app.use(
     cookieParser(
       configService.getOrThrow('auth.cookieSecret', { infer: true }),
@@ -51,31 +70,10 @@ async function bootstrap() {
       transform: true,
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       exceptionFactory: (errors: ValidationError[]) => {
-        const formatErrors = (
-          errors: ValidationError[],
-          parentProperty: string = '',
-        ) => {
-          return errors.reduce((acc: Record<string, string[]>, error) => {
-            const property = parentProperty
-              ? `${parentProperty}.${error.property}`
-              : error.property;
-
-            if (error.constraints) {
-              acc[property] = Object.values(error.constraints);
-            }
-
-            if (error.children && error.children.length > 0) {
-              Object.assign(acc, formatErrors(error.children, property));
-            }
-
-            return acc;
-          }, {});
-        };
-
         return new UnprocessableEntityException({
           statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
           message: 'Validation failed',
-          errors: formatErrors(errors),
+          errors: formatValidationErrors(errors),
         });
       },
     }),
@@ -95,6 +93,6 @@ async function bootstrap() {
   });
 
   const port = configService.getOrThrow('app.port', { infer: true });
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 }
 void bootstrap();

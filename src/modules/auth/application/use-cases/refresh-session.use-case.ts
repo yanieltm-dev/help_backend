@@ -1,8 +1,7 @@
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { Authenticator } from '../ports/authenticator.port';
 import { Session } from '../../domain/entities/session.entity';
 import { InvalidRefreshTokenError } from '../../domain/errors/invalid-refresh-token.error';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
+import type { Authenticator } from '../ports/authenticator.port';
 
 export interface RefreshSessionCommand {
   refreshToken: string;
@@ -23,7 +22,6 @@ export type RefreshSessionUseCaseConfig = {
 export class RefreshSessionUseCase {
   constructor(
     private readonly sessionRepo: SessionRepository,
-    private readonly userRepo: UserRepository,
     private readonly authenticator: Authenticator,
     private readonly config: RefreshSessionUseCaseConfig,
   ) {}

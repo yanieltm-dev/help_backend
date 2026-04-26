@@ -1,0 +1,43 @@
+import type { UserRepository } from '../../domain/ports/user.repository.port';
+import type { ProfileRepository } from '../../domain/ports/profile.repository.port';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+
+export interface GetMeQuery {
+  userId: string;
+}
+
+export interface GetMeResult {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  birthDate: Date | null;
+  bio: string | null;
+}
+
+export class GetMeUseCase {
+  constructor(
+    private readonly userRepo: UserRepository,
+    private readonly profileRepo: ProfileRepository,
+  ) {}
+
+  async execute(query: GetMeQuery): Promise<GetMeResult> {
+    const user = await this.userRepo.findById(query.userId);
+    if (!user) throw new UserNotFoundError();
+
+    const profile = await this.profileRepo.findByUserId(user.id);
+
+    return {
+      id: user.id,
+      email: user.email.value,
+      emailVerified: user.emailVerified,
+      username: profile?.username ?? null,
+      displayName: profile?.displayName ?? null,
+      avatarUrl: profile?.avatarUrl ?? null,
+      birthDate: profile?.birthDate ?? null,
+      bio: profile?.bio ?? null,
+    };
+  }
+}

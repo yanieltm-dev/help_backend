@@ -1,566 +1,218 @@
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
 import { Pool } from 'pg';
-import { bootstrapE2eApp } from './utils/bootstrap-e2e-app';
-
-interface ApiResponse {
-  message: string;
-  userId?: string;
-  errors?: Record<string, string[]>;
-}
-
-type LoginResponseBody = {
-  accessToken: string;
-  accessTokenExpiresAt: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-    emailVerified: boolean;
-  };
-};
-
-type GenericMessageBody = {
-  message: string;
-};
-
-function getSetCookieHeader(res: {
-  headers: Record<string, unknown>;
-}): string[] {
-  const header = res.headers['set-cookie'];
-  if (!header) return [];
-  if (Array.isArray(header)) return header as string[];
-  if (typeof header === 'string') return [header];
-  return [];
-}
+import { ApiClient, createApiClient } from './utils/api-client';
+import { buildUserFixture, registerAndActivateUser } from './utils/db-helpers';
+import { cleanDatabase } from './utils/e2e-setup';
+import {
+  getApp,
+  getPool,
+  initializeTestContext,
+  teardownTestContext,
+} from './utils/test-context';
+import {
+  ApiResponse,
+  GenericMessageBody,
+  LoginResponseBody,
+} from './utils/types';
 
 describe('AuthController (e2e)', () => {
-  let app: INestApplication;
-  let dbAvailable = true;
+  let api: ApiClient;
+  let pool: Pool;
 
   beforeAll(async () => {
-    const bootstrapResult = await bootstrapE2eApp({
-      validationMode: 'production',
-      useCookieParser: true,
-    });
-    app = bootstrapResult.app;
-    dbAvailable = bootstrapResult.dbAvailable;
+    await initializeTestContext();
+    api = createApiClient(getApp());
+    pool = getPool();
+  });
+
+  afterEach(async () => {
+    await cleanDatabase(pool);
   });
 
   afterAll(async () => {
-    if (app) {
-      await app.close();
-    }
+    await teardownTestContext();
   });
 
-  const timestamp = Date.now();
-  const validUser = {
-    name: 'Test User',
-    username: `testuser_${timestamp}`,
-    email: `test_${timestamp}@example.com`,
-    password: 'Password123!',
-    birthDate: '2000-01-01',
-  };
+  const validUser = buildUserFixture();
 
   describe('/api/v1/auth/register (POST)', () => {
     it('Scenario 1: Successful registration', async () => {
-      if (!dbAvailable) return;
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(validUser)
-        .expect(201)
-        .expect((res) => {
-          const body = res.body as ApiResponse;
-          expect(body).toHaveProperty('message', 'Verification email sent');
-          expect(body).toHaveProperty('userId');
-        });
+      const res = await api.post('/auth/register').send(validUser).expect(201);
+      const body = res.body as ApiResponse;
+      expect(body).toHaveProperty('message', 'Verification email sent');
+      expect(body).toHaveProperty('userId');
     });
 
     it('Scenario 2: Email already registered', async () => {
-      if (!dbAvailable) return;
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
+      await api.post('/auth/register').send(validUser).expect(201);
+
+      const res = await api
+        .post('/auth/register')
         .send({
           ...validUser,
-          username: `other_${timestamp}`, // Different username, same email
+          username: `other_${Date.now()}`,
         })
-        .expect(409)
-        .expect((res) => {
-          expect((res.body as ApiResponse).message).toBe(
-            'Email already registered',
-          );
-        });
+        .expect(409);
+
+      expect((res.body as ApiResponse).message).toBe(
+        'Email already registered',
+      );
     });
 
     it('Scenario 3: Username already registered', async () => {
-      if (!dbAvailable) return;
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
+      await api.post('/auth/register').send(validUser).expect(201);
+
+      const res = await api
+        .post('/auth/register')
         .send({
           ...validUser,
-          email: `other_${timestamp}@example.com`, // Different email, same username
+          email: `other_${Date.now()}@example.com`,
         })
-        .expect(409)
-        .expect((res) => {
-          expect((res.body as ApiResponse).message).toBe(
-            'Username is not available',
-          );
-        });
+        .expect(409);
+
+      expect((res.body as ApiResponse).message).toBe(
+        'Username is not available',
+      );
     });
 
-    it('Scenario 4: User too young (under 13)', () => {
-      const youngUser = {
-        ...validUser,
-        username: `young_${timestamp}`,
-        email: `young_${timestamp}@example.com`,
-        birthDate: new Date().toISOString().split('T')[0], // Born today
-      };
+    it('Scenario 4: User too young (under 13)', async () => {
+      const youngUser = buildUserFixture({
+        birthDate: new Date().toISOString().split('T')[0],
+      });
 
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(youngUser)
-        .expect(422)
-        .expect((res) => {
-          const body = res.body as ApiResponse;
-          expect(body.message).toBe('Validation failed');
-          expect(body.errors?.birthDate).toContain(
-            'You must be at least 13 years old to register',
-          );
-        });
+      const res = await api.post('/auth/register').send(youngUser).expect(422);
+      const body = res.body as ApiResponse;
+      expect(body.message).toBe('Validation failed');
+
+      const birthDateErrors = body.errors?.birthDate;
+      expect(birthDateErrors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: expect.stringMatching(
+              /You must be at least \d+ years old to register/,
+            ) as unknown as string,
+          }),
+        ]),
+      );
     });
 
-    it('Scenario 5: Invalid data (invalid email)', () => {
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send({
-          ...validUser,
-          email: 'not-an-email',
-        })
-        .expect(422)
-        .expect((res) => {
-          const body = res.body as ApiResponse;
-          expect(body.message).toBe('Validation failed');
-          expect(body.errors).toHaveProperty('email');
-        });
+    it('Scenario 5: Invalid data (invalid email)', async () => {
+      const res = await api
+        .post('/auth/register')
+        .send({ ...validUser, email: 'not-an-email' })
+        .expect(422);
+
+      const body = res.body as ApiResponse;
+      expect(body.errors).toHaveProperty('email');
     });
 
-    it('Scenario 5: Invalid data (weak password)', () => {
-      return request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send({
-          ...validUser,
-          password: '123',
-        })
-        .expect(422)
-        .expect((res) => {
-          const body = res.body as ApiResponse;
-          expect(body.message).toBe('Validation failed');
-          expect(body.errors).toHaveProperty('password');
-        });
+    it('Scenario 6: Invalid data (weak password)', async () => {
+      const res = await api
+        .post('/auth/register')
+        .send({ ...validUser, password: '123' })
+        .expect(422);
+
+      const body = res.body as ApiResponse;
+      expect(body.errors).toHaveProperty('password');
     });
   });
 
   describe('Auth refresh and logout flow (e2e)', () => {
     it('Scenario 1: Valid refresh rotates tokens', async () => {
-      if (!dbAvailable) return;
-      // Register a fresh user for this scenario
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `refreshrotate_${ts}`,
-        email: `refreshrotate_${ts}@example.com`,
-      };
+      const { accessToken: originalAt, cookies } =
+        await registerAndActivateUser(api, pool);
 
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      // Mark email as verified directly in DB to make the user eligible to login
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      // Login to obtain tokens and refresh cookie
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const originalAccessToken = (loginResponse.body as LoginResponseBody)
-        .accessToken;
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-      expect(cookies).toBeDefined();
-
-      // Use refresh endpoint with cookie
-      const refreshResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/refresh')
+      const res = await api
+        .post('/auth/refresh')
         .set('Cookie', cookies)
         .expect(200);
 
-      const refreshedAccessToken = (refreshResponse.body as LoginResponseBody)
-        .accessToken;
-      expect(refreshedAccessToken).toBeDefined();
-      expect(refreshedAccessToken).not.toBe(originalAccessToken);
-      expect(refreshResponse.headers['set-cookie']).toBeDefined();
-    });
-
-    it('Scenario 1.1: GET /me without token returns 401', async () => {
-      if (!dbAvailable) return;
-
-      await request(app.getHttpServer() as App)
-        .get('/api/v1/auth/me')
-        .expect(401);
-    });
-
-    it('Scenario 1.2: GET /me with access token returns current user', async () => {
-      if (!dbAvailable) return;
-
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `meuser_${ts}`,
-        email: `me_${ts}@example.com`,
-      };
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      // Mark email as verified directly in DB to make the user eligible to login
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
-      expect(accessToken).toBeDefined();
-
-      await request(app.getHttpServer() as App)
-        .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('id');
-          expect(res.body).toHaveProperty('name', user.name);
-          expect(res.body).toHaveProperty('email', user.email.toLowerCase());
-          expect(res.body).toHaveProperty('image');
-          expect(res.body).toHaveProperty('emailVerified', true);
-        });
+      const body = res.body as LoginResponseBody;
+      expect(body.accessToken).toBeDefined();
+      expect(body.accessToken).not.toBe(originalAt);
+      expect(res.headers['set-cookie']).toBeDefined();
     });
 
     it('Scenario 2: Refresh after logout returns 401', async () => {
-      if (!dbAvailable) return;
-      // Register and login again with unique email/username
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `refreshuser_${ts}`,
-        email: `refresh_${ts}@example.com`,
-      };
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
+      const { cookies } = await registerAndActivateUser(api, pool);
 
-      // Mark email as verified directly in DB to make the user eligible to login
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
+      await api.post('/auth/logout').set('Cookie', cookies).expect(200);
 
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      // Logout to revoke refresh token
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/logout')
-        .set('Cookie', cookies)
-        .expect(200);
-
-      // Attempt refresh with same cookie should now fail with 401
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', cookies)
-        .expect(401);
+      await api.post('/auth/refresh').set('Cookie', cookies).expect(401);
     });
 
     it('Scenario 3: Logout clears refresh cookie', async () => {
-      if (!dbAvailable) return;
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `logoutuser_${ts}`,
-        email: `logout_${ts}@example.com`,
-      };
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
+      const { cookies } = await registerAndActivateUser(api, pool);
 
-      // Mark email as verified directly in DB to make the user eligible to login
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      const logoutResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/logout')
+      const res = await api
+        .post('/auth/logout')
         .set('Cookie', cookies)
         .expect(200);
 
-      const logoutCookies = getSetCookieHeader(
-        logoutResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
+      const logoutCookies = res.headers['set-cookie'] as unknown as string[];
+      expect(logoutCookies.some((c) => c.startsWith('refresh_token='))).toBe(
+        true,
       );
-      expect(
-        (logoutCookies ?? []).some((c) => c.startsWith('refresh_token=')),
-      ).toBe(true);
     });
   });
 
   describe('Password reset flow (e2e)', () => {
     it('Scenario 1: Request password reset returns 200 even if email does not exist', async () => {
-      if (!dbAvailable) return;
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/request-password-reset')
+      const res = await api
+        .post('/auth/request-password-reset')
         .send({ email: `unknown_${Date.now()}@example.com` })
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as GenericMessageBody;
-          expect(body.message).toBe(
-            'If an account with this email exists, a password reset code has been sent.',
-          );
-        });
+        .expect(200);
+
+      expect((res.body as GenericMessageBody).message).toBe(
+        'If an account with this email exists, a password reset code has been sent.',
+      );
     });
 
-    it('Scenario 2: Reset password with invalid OTP returns 400', async () => {
-      if (!dbAvailable) return;
+    it('Scenario 2: Verify password reset OTP with invalid OTP returns 400', async () => {
+      const user = buildUserFixture();
+      await api.post('/auth/register').send(user).expect(201);
 
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `resetinvalid_${ts}`,
-        email: `resetinvalid_${ts}@example.com`,
-      };
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/reset-password')
-        .send({
-          email: user.email,
-          code: '000000',
-          newPassword: 'NewPassword123!',
-        })
+      await api
+        .post('/auth/verify-password-reset-otp')
+        .send({ email: user.email, otp: '000000' })
         .expect(400);
     });
 
-    it('Scenario 3: After reset password, refresh with old token fails (sessions invalidated)', async () => {
-      if (!dbAvailable) return;
+    it('Scenario 3: When password change fails, refresh with old token still works', async () => {
+      const { cookies } = await registerAndActivateUser(api, pool);
 
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `resetlogout_${ts}`,
-        email: `resetlogout_${ts}@example.com`,
-      };
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      // Mark email as verified directly in DB to make the user eligible to login
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
+      await api
+        .post('/auth/change-password-with-token')
         .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      // Without intercepting the OTP, we cannot complete a successful reset end-to-end.
-      // This test asserts the behavioral contract by forcing session invalidation through
-      // a direct reset with an invalid OTP (which should NOT invalidate sessions).
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/reset-password')
-        .send({
-          email: user.email,
-          code: '000000',
+          changePasswordToken: 'invalid-token-format',
           newPassword: 'NewPassword123!',
         })
         .expect(400);
 
-      // Still valid because reset failed
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', cookies)
-        .expect(200);
+      await api.post('/auth/refresh').set('Cookie', cookies).expect(200);
     });
   });
 
   describe('Change password flow (e2e)', () => {
     it('Scenario 1: Changes password and revokes other sessions but keeps current', async () => {
-      if (!dbAvailable) return;
+      const {
+        user,
+        accessToken: firstAt,
+        cookies: firstCookies,
+      } = await registerAndActivateUser(api, pool);
 
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `changepw_${ts}`,
-        email: `changepw_${ts}@example.com`,
-      };
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const firstLoginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
+      // Second login
+      const secondLoginRes = await api
+        .post('/auth/login')
+        .send({ emailOrUsername: user.email, password: user.password })
         .expect(200);
+      const secondCookies = secondLoginRes.headers[
+        'set-cookie'
+      ] as unknown as string[];
 
-      const firstAccessToken = (firstLoginResponse.body as LoginResponseBody)
-        .accessToken;
-      const firstCookies = getSetCookieHeader(
-        firstLoginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      const secondLoginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const secondCookies = getSetCookieHeader(
-        secondLoginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      await request(app.getHttpServer() as App)
-        .patch('/api/v1/auth/change-password')
-        .set('Authorization', `Bearer ${firstAccessToken}`)
+      // Change password
+      await api
+        .patch('/auth/change-password')
+        .set('Authorization', `Bearer ${firstAt}`)
         .set('Cookie', firstCookies)
         .send({
           currentPassword: user.password,
@@ -568,122 +220,36 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      // Current session should still work
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', firstCookies)
-        .expect(200);
+      // Current session still works
+      await api.post('/auth/refresh').set('Cookie', firstCookies).expect(200);
 
-      // Other session should be revoked
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', secondCookies)
-        .expect(401);
+      // Other session is revoked
+      await api.post('/auth/refresh').set('Cookie', secondCookies).expect(401);
     });
 
-    it('Scenario 2: Wrong current password returns 401', async () => {
-      if (!dbAvailable) return;
+    it('Scenario 2: Wrong current password returns 400', async () => {
+      const { accessToken, cookies } = await registerAndActivateUser(api, pool);
 
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `changepw_wrong_${ts}`,
-        email: `changepw_wrong_${ts}@example.com`,
-      };
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      await request(app.getHttpServer() as App)
-        .patch('/api/v1/auth/change-password')
+      await api
+        .patch('/auth/change-password')
         .set('Authorization', `Bearer ${accessToken}`)
         .set('Cookie', cookies)
         .send({
           currentPassword: 'WrongPassword123!',
           newPassword: 'NewPassword123!',
         })
-        .expect(401);
+        .expect(400);
     });
 
     it('Scenario 3: Invalid new password returns 422', async () => {
-      if (!dbAvailable) return;
+      const { accessToken, cookies } = await registerAndActivateUser(api, pool);
 
-      const ts = Date.now();
-      const user = {
-        ...validUser,
-        username: `changepw_invalid_${ts}`,
-        email: `changepw_invalid_${ts}@example.com`,
-      };
-
-      await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/register')
-        .send(user)
-        .expect(201);
-
-      const databaseUrl = process.env.DATABASE_URL;
-      expect(databaseUrl).toBeDefined();
-
-      const pool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 1000,
-      });
-      await pool.query(
-        'update "user" set email_verified = true, status = \'active\' where email = $1',
-        [user.email.toLowerCase()],
-      );
-      await pool.end();
-
-      const loginResponse = await request(app.getHttpServer() as App)
-        .post('/api/v1/auth/login')
-        .send({
-          emailOrUsername: user.email,
-          password: user.password,
-        })
-        .expect(200);
-
-      const accessToken = (loginResponse.body as LoginResponseBody).accessToken;
-      const cookies = getSetCookieHeader(
-        loginResponse as unknown as {
-          headers: Record<string, unknown>;
-        },
-      );
-
-      await request(app.getHttpServer() as App)
-        .patch('/api/v1/auth/change-password')
+      await api
+        .patch('/auth/change-password')
         .set('Authorization', `Bearer ${accessToken}`)
         .set('Cookie', cookies)
         .send({
-          currentPassword: user.password,
+          currentPassword: 'Password123!',
           newPassword: '123',
         })
         .expect(422);

@@ -1,15 +1,18 @@
 import { RequestPasswordResetUseCase } from '@/modules/auth/application/use-cases/request-password-reset.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
 
 type CreateRequestPasswordResetUseCaseSutOverrides = Partial<
   Readonly<{
     userRepo: jest.Mocked<UserRepository>;
+    profileRepo?: jest.Mocked<ProfileRepository>;
     verificationRepo: jest.Mocked<VerificationRepository>;
     hasher: jest.Mocked<PasswordHasher>;
     eventBus: jest.Mocked<IEventBus>;
@@ -20,6 +23,7 @@ type CreateRequestPasswordResetUseCaseSutOverrides = Partial<
 type RequestPasswordResetUseCaseSut = Readonly<{
   useCase: RequestPasswordResetUseCase;
   userRepo: jest.Mocked<UserRepository>;
+  profileRepo: jest.Mocked<ProfileRepository>;
   verificationRepo: jest.Mocked<VerificationRepository>;
   eventBus: jest.Mocked<IEventBus>;
 }>;
@@ -29,6 +33,8 @@ export function createRequestPasswordResetUseCaseSut(
 ): RequestPasswordResetUseCaseSut {
   const defaultUserRepo: jest.Mocked<UserRepository> =
     AuthUseCaseTestKit.createUserRepositoryMock();
+  const defaultProfileRepo: jest.Mocked<ProfileRepository> =
+    AuthUseCaseTestKit.createProfileRepositoryMock();
   const defaultVerificationRepo: jest.Mocked<VerificationRepository> =
     AuthUseCaseTestKit.createVerificationRepositoryMock();
   const defaultHasher: jest.Mocked<PasswordHasher> =
@@ -41,6 +47,8 @@ export function createRequestPasswordResetUseCaseSut(
   defaultIdGenerator.generate.mockReturnValue('verification-id');
   const resolvedUserRepo: jest.Mocked<UserRepository> =
     overrides.userRepo ?? defaultUserRepo;
+  const resolvedProfileRepo: jest.Mocked<ProfileRepository> =
+    overrides.profileRepo ?? defaultProfileRepo;
   const resolvedVerificationRepo: jest.Mocked<VerificationRepository> =
     overrides.verificationRepo ?? defaultVerificationRepo;
   const resolvedHasher: jest.Mocked<PasswordHasher> =
@@ -52,13 +60,19 @@ export function createRequestPasswordResetUseCaseSut(
   return {
     useCase: new RequestPasswordResetUseCase(
       resolvedUserRepo,
+      resolvedProfileRepo,
       resolvedVerificationRepo,
       resolvedHasher,
       resolvedEventBus,
       resolvedIdGenerator,
-      { otpExpiresInMs: 600000, maxRequests: 5, windowMs: 900000 },
+      {
+        otpExpiresInMs: parseDuration('10m'),
+        maxRequests: 3,
+        windowMs: parseDuration('1h'),
+      },
     ),
     userRepo: resolvedUserRepo,
+    profileRepo: resolvedProfileRepo,
     verificationRepo: resolvedVerificationRepo,
     eventBus: resolvedEventBus,
   };

@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { IsString, IsOptional } from 'class-validator';
 import { validateConfig } from './validate-config';
+import { parseDuration } from '../../shared/utils/parse-duration';
 
 export type AuthConfig = {
   jwtSecret: string;
@@ -11,7 +12,14 @@ export type AuthConfig = {
   maxFailedAttempts: number;
   lockoutDurationMs: number;
   otpExpiresInMs: number;
+  otpMaxAttempts: number;
+  changePasswordTokenExpiresInMs: number;
   sessionExpiresInMs: number;
+  resendVerificationMaxRequests: number;
+  resendVerificationWindowMs: number;
+  passwordResetRequestMaxRequests: number;
+  passwordResetRequestWindowMs: number;
+  minAgeRegister: number;
 };
 
 class EnvironmentVariables {
@@ -37,15 +45,43 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  AUTH_LOCKOUT_DURATION_MS?: string;
+  AUTH_LOCKOUT_DURATION?: string;
 
   @IsString()
   @IsOptional()
-  AUTH_OTP_EXPIRES_IN_MS?: string;
+  AUTH_OTP_EXPIRES_IN?: string;
 
   @IsString()
   @IsOptional()
-  AUTH_SESSION_EXPIRES_IN_MS?: string;
+  AUTH_OTP_MAX_ATTEMPTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_CHANGE_PASSWORD_TOKEN_EXPIRES_IN?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_SESSION_EXPIRES_IN?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_RESEND_VERIFICATION_MAX_REQUESTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_RESEND_VERIFICATION_WINDOW?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_PASSWORD_RESET_REQUEST_MAX_REQUESTS?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_PASSWORD_RESET_REQUEST_WINDOW?: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_MIN_AGE_REGISTER?: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -60,18 +96,32 @@ export default registerAs<AuthConfig>('auth', () => {
       process.env.AUTH_MAX_FAILED_ATTEMPTS || '5',
       10,
     ),
-    lockoutDurationMs: parseInt(
-      process.env.AUTH_LOCKOUT_DURATION_MS || '900000',
+    lockoutDurationMs: parseDuration(
+      process.env.AUTH_LOCKOUT_DURATION || '15m',
+    ),
+    otpExpiresInMs: parseDuration(process.env.AUTH_OTP_EXPIRES_IN || '10m'),
+    otpMaxAttempts: parseInt(process.env.AUTH_OTP_MAX_ATTEMPTS || '5', 10),
+    changePasswordTokenExpiresInMs: parseDuration(
+      process.env.AUTH_CHANGE_PASSWORD_TOKEN_EXPIRES_IN || '15m',
+    ),
+    sessionExpiresInMs: parseDuration(
+      process.env.AUTH_SESSION_EXPIRES_IN || '1h',
+    ),
+    resendVerificationMaxRequests: parseInt(
+      process.env.AUTH_RESEND_VERIFICATION_MAX_REQUESTS || '3',
       10,
     ),
-    otpExpiresInMs: parseInt(
-      process.env.AUTH_OTP_EXPIRES_IN_MS || '600000',
+    resendVerificationWindowMs: parseDuration(
+      process.env.AUTH_RESEND_VERIFICATION_WINDOW || '1h',
+    ),
+    passwordResetRequestMaxRequests: parseInt(
+      process.env.AUTH_PASSWORD_RESET_REQUEST_MAX_REQUESTS || '3',
       10,
     ),
-    sessionExpiresInMs: parseInt(
-      process.env.AUTH_SESSION_EXPIRES_IN_MS || '604800000',
-      10,
+    passwordResetRequestWindowMs: parseDuration(
+      process.env.AUTH_PASSWORD_RESET_REQUEST_WINDOW || '1h',
     ),
     cookieSecret: process.env.AUTH_COOKIE_SECRET || 'cookie-secret',
+    minAgeRegister: parseInt(process.env.AUTH_MIN_AGE_REGISTER || '13', 10),
   };
 });

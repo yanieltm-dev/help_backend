@@ -1,16 +1,22 @@
 export type ResendVerificationUseCaseConfig = {
   otpExpiresInMs: number;
+  maxRequests: number;
+  windowMs: number;
 };
-import type { UserRepository } from '../../domain/ports/user.repository.port';
-import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
+import { UserNotFoundError } from '@/modules/users/domain/errors/user-not-found.error';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
-import { VerificationToken } from '../../domain/entities/verification-token.entity';
-import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
-import { Otp } from '../../domain/value-objects/otp.vo';
-import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
+import {
+  VerificationToken,
+  VerificationTokenType,
+} from '../../domain/entities/verification-token.entity';
 import { EmailAlreadyVerifiedError } from '../../domain/errors/email-already-verified.error';
+import { VerificationResendedDomainEvent } from '../../domain/events/verification-resended.domain-event';
+import type { VerificationRepository } from '../../domain/ports/verification.repository.port';
+import { Otp } from '../../domain/value-objects/otp.vo';
+import type { PasswordHasher } from '../ports/password-hasher.port';
 
 export interface ResendVerificationCommand {
   email: string;
@@ -19,6 +25,7 @@ export interface ResendVerificationCommand {
 export class ResendVerificationUseCase {
   constructor(
     private readonly userRepo: UserRepository,
+    private readonly profileRepo: ProfileRepository,
     private readonly verificationRepo: VerificationRepository,
     private readonly hasher: PasswordHasher,
     private readonly eventBus: IEventBus,
@@ -38,12 +45,21 @@ export class ResendVerificationUseCase {
       throw new EmailAlreadyVerifiedError();
     }
 
-    // TODO: Implement rate limiting (max 3 resends per hour)
-    // For now, we just invalidate previous ones
+    const windowStart = new Date(Date.now() - this.config.windowMs);
+    const recentCount =
+      await this.verificationRepo.countRecentForIdentifierAndTypeSince(
+        email,
+        VerificationTokenType.EMAIL_VERIFICATION,
+        windowStart,
+      );
+
+    if (recentCount >= this.config.maxRequests) {
+      return;
+    }
 
     await this.verificationRepo.invalidateAllForIdentifier(
       email,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
     );
 
     const otp = Otp.generate().value;
@@ -53,16 +69,19 @@ export class ResendVerificationUseCase {
       this.idGenerator.generate(),
       email,
       hashedOtp,
-      'email_verification',
+      VerificationTokenType.EMAIL_VERIFICATION,
       this.config.otpExpiresInMs,
     );
 
     await this.verificationRepo.save(verification);
+
+    const profile = await this.profileRepo.findByUserId(user.id);
+
     this.eventBus.publish(
       new VerificationResendedDomainEvent(
         email,
         otp,
-        user.name,
+        profile?.displayName ?? profile?.username ?? '',
         this.config.otpExpiresInMs,
       ),
     );

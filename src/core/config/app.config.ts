@@ -8,6 +8,7 @@ export type AppConfig = {
   port: number;
   apiPrefix: string;
   backendDomain: string;
+  allowedOrigins: string[];
 };
 
 enum Environment {
@@ -35,6 +36,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   BACKEND_DOMAIN?: string;
+
+  @IsString()
+  @IsOptional()
+  ALLOWED_ORIGINS?: string;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -46,5 +51,8 @@ export default registerAs<AppConfig>('app', () => {
     port: process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000,
     apiPrefix: process.env.API_PREFIX || 'api',
     backendDomain: process.env.APP_URL || 'http://localhost:3000',
+    allowedOrigins: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : ['http://localhost:3001', 'http://localhost:3002'],
   };
 });

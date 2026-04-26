@@ -1,14 +1,15 @@
 import { RegisterUserUseCase } from '@/modules/auth/application/use-cases/register-user.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
+import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
 import type { AccountRepository } from '@/modules/auth/domain/ports/account.repository.port';
-import type { ProfileRepository } from '@/modules/auth/domain/ports/profile.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { IEventBus } from '@/shared/domain/ports/event-bus.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
 
 type CreateRegisterUserUseCaseSutOverrides = Partial<
   Readonly<{
@@ -76,7 +77,7 @@ export function createRegisterUserUseCaseSut(
       resolvedUow,
       resolvedIdGenerator,
       resolvedEventBus,
-      { otpExpiresInMs: 600000 },
+      { otpExpiresInMs: parseDuration('10m') },
     ),
     eventBus: resolvedEventBus,
   };

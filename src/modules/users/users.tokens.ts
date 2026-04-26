@@ -1,0 +1,2 @@
+export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
+export const PROFILE_REPOSITORY = Symbol('PROFILE_REPOSITORY');

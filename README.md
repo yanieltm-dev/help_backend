@@ -40,7 +40,7 @@ This backend is built with a focus on **performance**, **security**, and **scala
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v20 or higher recommended)
+- [Node.js](https://nodejs.org/) (v22 or higher)
 - [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
 
@@ -48,26 +48,35 @@ This backend is built with a focus on **performance**, **security**, and **scala
 
 1. Clone the repository.
 2. Create your `.env` file:
+
    ```bash
    cp .env.example .env
    ```
+
 3. Configure the environment variables in the `.env` file (DATABASE_URL, etc.).
 
 ### Installation and Run
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
+
 2. Start the database with Docker:
+
    ```bash
    docker-compose up -d
    ```
+
 3. Run database migrations:
+
    ```bash
    pnpm db:push
    ```
+
 4. Start the server in development mode:
+
    ```bash
    pnpm dev
    ```
@@ -92,23 +101,47 @@ The project follows a modular and organized structure based on NestJS best pract
 
 ```text
 src/
-├── core/             # Core functionality and global configuration
-│   ├── config/       # Validated environment configuration
-│   └── database/     # Database layer (Drizzle ORM, schema, connection)
-├── modules/          # Feature-specific modules (e.g. health)
-├── shared/           # Shared utilities, filters, decorators, etc.
+├── core/             # Cross-cutting infrastructure
+│   ├── config/       # Environment variables configuration
+│   ├── database/     # Drizzle ORM configuration
+│   ├── filters/      # Global exception filters
+│   └── validation/   # Validation pipes
+├── modules/          # Domain modules (DDD Hexagonal Architecture)
+│   ├── auth/         # Authentication and authorization
+│   ├── users/        # User management
+│   ├── media/        # File storage (local/S3)
+│   └── health/       # Health checks
+├── shared/           # Shared utilities and helpers
 ├── app.module.ts     # Main application module
-├── main.ts           # Application entry point & configuration
-└── metadata.ts       # Swagger and plugin metadata
+└── main.ts           # Application entry point
+```
+
+**Architecture:** The project follows **Domain-Driven Design (DDD)** and **Hexagonal Architecture** principles with clear separation between domain, application, and infrastructure layers.
+
+---
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+pnpm test
+
+# E2E tests
+pnpm test:e2e
+
+# Test coverage
+pnpm test:cov
 ```
 
 ---
 
 ## 🔐 Security & Best Practices
 
+- **Architecture:** DDD and Hexagonal Architecture for maintainability
 - **Throttling:** Protection against brute-force attacks.
 - **Helmet:** Protection against common web vulnerabilities.
 - **Data Validation:** Use of `class-validator` to ensure entry integrity.
-- **Versioning:** API versioned via URI (`/api/v1/...`).
+- **API Versioning:** Versioned via URI (`/api/v1/...`).
+- **TDD:** Test-Driven Development is mandatory (see AGENTS.md).
 
 ---

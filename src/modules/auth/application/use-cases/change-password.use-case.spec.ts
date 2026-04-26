@@ -1,11 +1,11 @@
-import { ChangePasswordUseCase } from './change-password.use-case';
-import type { AccountRepository } from '../../domain/ports/account.repository.port';
-import type { SessionRepository } from '../../domain/ports/session.repository.port';
-import type { PasswordHasher } from '../ports/password-hasher.port';
 import { Account } from '../../domain/entities/account.entity';
-import { Password } from '../../domain/value-objects/password.vo';
 import { InvalidCurrentPasswordError } from '../../domain/errors/invalid-current-password.error';
 import { InvalidNewPasswordError } from '../../domain/errors/invalid-new-password.error';
+import type { AccountRepository } from '../../domain/ports/account.repository.port';
+import type { SessionRepository } from '../../domain/ports/session.repository.port';
+import { Password } from '../../domain/value-objects/password.vo';
+import type { PasswordHasher } from '../ports/password-hasher.port';
+import { ChangePasswordUseCase } from './change-password.use-case';
 import { createChangePasswordUseCaseSut } from './test-utils/sut/create-change-password-use-case-sut';
 
 describe('ChangePasswordUseCase', () => {
@@ -16,10 +16,7 @@ describe('ChangePasswordUseCase', () => {
 
   beforeEach(() => {
     const sut = createChangePasswordUseCaseSut();
-    useCase = sut.useCase;
-    accountRepo = sut.accountRepo;
-    sessionRepo = sut.sessionRepo;
-    hasher = sut.hasher;
+    ({ useCase, accountRepo, sessionRepo, hasher } = sut);
   });
 
   it('changes password and invalidates sessions except current one', async () => {
@@ -43,10 +40,37 @@ describe('ChangePasswordUseCase', () => {
       currentRefreshToken: inputCurrentRefreshToken,
     });
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(accountRepo.save).toHaveBeenCalled();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     expect(sessionRepo.deleteByUserIdExceptToken).toHaveBeenCalled();
+  });
+
+  it('deletes all sessions when currentRefreshToken is empty', async () => {
+    const inputUserId = 'user-id';
+    const account = new Account(
+      'acc-id',
+      inputUserId,
+      'credentials',
+      'user@example.com',
+      Password.createFromHash('old-hash'),
+    );
+    accountRepo.findByUserId.mockResolvedValue(account);
+    hasher.compare.mockResolvedValue(true);
+    hasher.hash.mockResolvedValue('new-hash');
+
+    await useCase.execute({
+      userId: inputUserId,
+      currentPassword: 'Password123!',
+      newPassword: 'NewPassword123!',
+      currentRefreshToken: '',
+    });
+
+    expect(accountRepo.save).toHaveBeenCalled();
+
+    expect(sessionRepo.deleteByUserId).toHaveBeenCalledWith(
+      inputUserId,
+      expect.anything(),
+    );
   });
 
   it('throws InvalidCurrentPasswordError when current password is incorrect', async () => {

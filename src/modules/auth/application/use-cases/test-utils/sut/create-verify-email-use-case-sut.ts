@@ -1,14 +1,15 @@
 import { VerifyEmailUseCase } from '@/modules/auth/application/use-cases/verify-email.use-case';
+import { parseDuration } from '@/shared/utils/parse-duration';
 
 import type { Authenticator } from '@/modules/auth/application/ports/authenticator.port';
 import type { PasswordHasher } from '@/modules/auth/application/ports/password-hasher.port';
-import type { ProfileRepository } from '@/modules/auth/domain/ports/profile.repository.port';
+import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
+import type { ProfileRepository } from '@/modules/users/domain/ports/profile.repository.port';
 import type { SessionRepository } from '@/modules/auth/domain/ports/session.repository.port';
-import type { UserRepository } from '@/modules/auth/domain/ports/user.repository.port';
+import type { UserRepository } from '@/modules/users/domain/ports/user.repository.port';
 import type { VerificationRepository } from '@/modules/auth/domain/ports/verification.repository.port';
 import type { IIdGenerator } from '@/shared/domain/ports/id-generator.port';
 import type { IUnitOfWork } from '@/shared/domain/ports/unit-of-work.port';
-import { AuthUseCaseTestKit } from '@/modules/auth/application/use-cases/test-utils/auth-use-case-test-kit';
 
 type CreateVerifyEmailUseCaseSutOverrides = Partial<
   Readonly<{
@@ -78,7 +79,7 @@ export function createVerifyEmailUseCaseSut(
       resolvedSessionRepo,
       resolvedProfileRepo,
       resolvedIdGenerator,
-      { sessionExpiresInMs: 3600000 },
+      { sessionExpiresInMs: parseDuration('1h'), otpMaxAttempts: 5 },
     ),
     userRepo: resolvedUserRepo,
     verificationRepo: resolvedVerificationRepo,
