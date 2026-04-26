@@ -59,6 +59,9 @@ describe('UpdateProfileUseCase', () => {
       'Old Name',
       'https://example.com/old-avatar.png',
       new Date('2000-01-01'),
+      null,
+      'https://old-website.com',
+      'Old Location',
     );
 
     userRepo.findById.mockResolvedValue(user);
@@ -69,12 +72,16 @@ describe('UpdateProfileUseCase', () => {
       userId: 'user-id-1',
       username: 'newusername',
       displayName: 'New Name',
+      website: 'https://new-website.com',
+      location: 'New Location',
     });
 
     expect(profileRepo.save).toHaveBeenCalled();
     const savedProfile = profileRepo.save.mock.calls[0][0];
     expect(savedProfile.username).toBe('newusername');
     expect(savedProfile.displayName).toBe('New Name');
+    expect(savedProfile.website).toBe('https://new-website.com');
+    expect(savedProfile.location).toBe('New Location');
   });
 
   it('should create profile when it does not exist', async () => {
@@ -133,6 +140,9 @@ describe('UpdateProfileUseCase', () => {
       'Another User',
       null,
       new Date('2000-01-01'),
+      null,
+      null,
+      null,
     );
 
     userRepo.findById.mockResolvedValue(user);
@@ -161,6 +171,9 @@ describe('UpdateProfileUseCase', () => {
       'My Name',
       null,
       new Date('2000-01-01'),
+      null,
+      null,
+      null,
     );
 
     userRepo.findById.mockResolvedValue(user);

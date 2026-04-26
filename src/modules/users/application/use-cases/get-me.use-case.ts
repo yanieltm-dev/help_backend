@@ -15,6 +15,8 @@ export interface GetMeResult {
   avatarUrl: string | null;
   birthDate: Date | null;
   bio: string | null;
+  website: string | null;
+  location: string | null;
 }
 
 export class GetMeUseCase {
@@ -38,6 +40,8 @@ export class GetMeUseCase {
       avatarUrl: profile?.avatarUrl ?? null,
       birthDate: profile?.birthDate ?? null,
       bio: profile?.bio ?? null,
+      website: profile?.website ?? null,
+      location: profile?.location ?? null,
     };
   }
 }

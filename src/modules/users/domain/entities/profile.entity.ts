@@ -7,6 +7,8 @@ export class Profile {
     public readonly avatarUrl: string | null,
     public readonly birthDate: Date,
     public readonly bio: string | null,
+    public readonly website: string | null,
+    public readonly location: string | null,
     public readonly createdAt: Date = new Date(),
   ) {}
 
@@ -18,6 +20,8 @@ export class Profile {
     avatarUrl: string | null,
     birthDate: Date,
     bio: string | null = null,
+    website: string | null = null,
+    location: string | null = null,
   ): Profile {
     return new Profile(
       id,
@@ -27,6 +31,8 @@ export class Profile {
       avatarUrl,
       birthDate,
       bio,
+      website,
+      location,
     );
   }
 
@@ -36,6 +42,8 @@ export class Profile {
     avatarUrl?: string | null;
     birthDate?: Date;
     bio?: string | null;
+    website?: string | null;
+    location?: string | null;
   }): Profile {
     return new Profile(
       this.id,
@@ -45,6 +53,8 @@ export class Profile {
       payload.avatarUrl !== undefined ? payload.avatarUrl : this.avatarUrl,
       payload.birthDate ?? this.birthDate,
       payload.bio !== undefined ? payload.bio : this.bio,
+      payload.website !== undefined ? payload.website : this.website,
+      payload.location !== undefined ? payload.location : this.location,
       this.createdAt,
     );
   }

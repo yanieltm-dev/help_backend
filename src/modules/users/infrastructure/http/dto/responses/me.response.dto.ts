@@ -24,4 +24,10 @@ export class MeResponseDto {
 
   @ApiProperty({ nullable: true })
   bio: string | null;
+
+  @ApiProperty({ nullable: true })
+  website: string | null;
+
+  @ApiProperty({ nullable: true })
+  location: string | null;
 }
