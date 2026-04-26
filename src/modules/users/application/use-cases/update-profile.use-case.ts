@@ -13,6 +13,8 @@ export interface UpdateProfileCommand {
   birthDate?: Date;
   avatarUrl?: string | null;
   bio?: string | null;
+  website?: string | null;
+  location?: string | null;
 }
 
 export class UpdateProfileUseCase {
@@ -48,6 +50,8 @@ export class UpdateProfileUseCase {
           command.avatarUrl ?? null,
           command.birthDate ?? new Date(),
           command.bio ?? null,
+          command.website ?? null,
+          command.location ?? null,
         );
         await this.profileRepo.save(newProfile, tx);
       } else {
@@ -57,6 +61,8 @@ export class UpdateProfileUseCase {
           birthDate: command.birthDate,
           avatarUrl: command.avatarUrl,
           bio: command.bio,
+          website: command.website,
+          location: command.location,
         });
         await this.profileRepo.save(updatedProfile, tx);
       }

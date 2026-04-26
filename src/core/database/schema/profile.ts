@@ -13,6 +13,7 @@ export const profile = pgTable('profile', {
   avatarUrl: text('avatar_url'),
   coverUrl: text('cover_url'),
   location: text('location'),
+  website: text('website'),
   birthDate: timestamp('birth_date', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),

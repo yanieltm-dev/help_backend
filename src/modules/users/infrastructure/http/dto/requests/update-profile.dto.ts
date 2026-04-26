@@ -36,7 +36,6 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional({ example: 'https://example.com/avatar.png' })
   @IsOptional()
-  @IsString()
   @IsUrl()
   @MaxLength(255)
   avatarUrl?: string;
@@ -46,4 +45,16 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(500)
   bio?: string;
+
+  @ApiPropertyOptional({ example: 'https://mywebsite.com' })
+  @IsOptional()
+  @IsUrl()
+  @MaxLength(100)
+  website?: string;
+
+  @ApiPropertyOptional({ example: 'New York, USA' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  location?: string;
 }
